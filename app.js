@@ -1,6 +1,7 @@
 /***********************
- * NUMO ADMIN PANEL V2
- * Uses JSONP to avoid CORS issue with Apps Script
+ * NUMO ADMIN PANEL
+ * File name: app.js
+ * Paired with index.html
  ***********************/
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwqqBJ1A9tqYhPhEJe37Ik3-HGKZOHUUHqdf_jtLJuTv8tqQpt6WqX5jUBQwKPMbM92tw/exec";
@@ -108,15 +109,18 @@ const BASE_PRODUCTS = [
 ];
 
 let data = { stock: [], promos: [], meta: {} };
-let adminPassword = sessionStorage.getItem("numoAdminPasswordV2") || "";
+let adminPassword = sessionStorage.getItem("numoAdminPassword") || "";
 let loggedIn = Boolean(adminPassword);
 
 const els = {};
 
 document.addEventListener("DOMContentLoaded", () => {
-  cache();
-  bind();
-  if (adminPassword) els.password.value = adminPassword;
+  cacheElements();
+  bindEvents();
+
+  if (adminPassword) {
+    els.password.value = adminPassword;
+  }
 
   if (loggedIn) {
     showPanel();
@@ -124,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function cache() {
+function cacheElements() {
   els.loginCard = document.getElementById("loginCard");
   els.panel = document.getElementById("panel");
   els.password = document.getElementById("password");
@@ -143,26 +147,29 @@ function cache() {
   els.clearSearch = document.getElementById("clearSearch");
 }
 
-function bind() {
+function bindEvents() {
   els.loginBtn.addEventListener("click", login);
-  els.password.addEventListener("keydown", e => {
-    if (e.key === "Enter") login();
+  els.password.addEventListener("keydown", event => {
+    if (event.key === "Enter") login();
   });
 
   els.logoutBtn.addEventListener("click", logout);
+
   els.refreshBtn.addEventListener("click", () => {
     if (!loggedIn) {
-      msg(els.loginMsg, "Login dulu.", "info");
+      showMessage(els.loginMsg, "Login dulu.", "info");
       return;
     }
+
     loadData();
   });
 
-  document.querySelectorAll(".tab").forEach(btn => {
-    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  document.querySelectorAll(".tab").forEach(button => {
+    button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
 
   els.search.addEventListener("input", renderPromos);
+
   els.clearSearch.addEventListener("click", () => {
     els.search.value = "";
     renderPromos();
@@ -171,8 +178,9 @@ function bind() {
 
 async function login() {
   const password = els.password.value.trim();
+
   if (!password) {
-    msg(els.loginMsg, "Masukkan password dulu.", "error");
+    showMessage(els.loginMsg, "Masukkan password dulu.", "error");
     return;
   }
 
@@ -184,15 +192,21 @@ async function login() {
       password
     });
 
-    if (!result.ok) throw new Error(result.error || "Password salah.");
+    if (!result.ok) {
+      throw new Error(result.error || "Password salah atau API error.");
+    }
 
     adminPassword = password;
     loggedIn = true;
-    sessionStorage.setItem("numoAdminPasswordV2", password);
+    sessionStorage.setItem("numoAdminPassword", password);
+
     showPanel();
+    showMessage(els.globalMsg, "Login berjaya. Loading data...", "success");
+
     await loadData();
+
   } catch (error) {
-    msg(els.loginMsg, "Login gagal: " + error.message, "error");
+    showMessage(els.loginMsg, "Login gagal: " + error.message, "error");
   } finally {
     setLoading(els.loginBtn, false, "Login Admin");
   }
@@ -201,11 +215,15 @@ async function login() {
 function logout() {
   adminPassword = "";
   loggedIn = false;
-  sessionStorage.removeItem("numoAdminPasswordV2");
+
+  sessionStorage.removeItem("numoAdminPassword");
+
   els.panel.classList.remove("active");
   els.loginCard.style.display = "block";
   els.logoutBtn.classList.add("hidden");
-  msg(els.loginMsg, "Logout berjaya.", "info");
+  els.password.value = "";
+
+  showMessage(els.loginMsg, "Logout berjaya.", "info");
 }
 
 function showPanel() {
@@ -215,7 +233,7 @@ function showPanel() {
 }
 
 async function loadData() {
-  msg(els.globalMsg, "Loading data...", "info");
+  showMessage(els.globalMsg, "Loading data dari Google Sheet...", "info");
   setLoading(els.refreshBtn, true, "Loading");
 
   try {
@@ -224,30 +242,35 @@ async function loadData() {
       _: Date.now()
     });
 
-    if (!result.ok) throw new Error(result.error || "Gagal baca data.");
+    if (!result.ok) {
+      throw new Error(result.error || "Gagal baca data.");
+    }
 
     data = result.data || { stock: [], promos: [], meta: {} };
+
     renderDashboard();
     renderStock();
     renderPromos();
-    msg(els.globalMsg, "Data berjaya sync.", "success");
+
+    showMessage(els.globalMsg, "Data berjaya sync.", "success");
+
   } catch (error) {
-    msg(els.globalMsg, "Gagal load data: " + error.message, "error");
+    showMessage(els.globalMsg, "Gagal load data: " + error.message, "error");
   } finally {
     setLoading(els.refreshBtn, false, "Refresh");
   }
 }
 
 function renderDashboard() {
-  els.stockOn.textContent = data.stock.filter(x => norm(x.status) === "ON").length;
-  els.stockOff.textContent = data.stock.filter(x => norm(x.status) === "OFF").length;
+  els.stockOn.textContent = data.stock.filter(item => normalize(item.status) === "ON").length;
+  els.stockOff.textContent = data.stock.filter(item => normalize(item.status) === "OFF").length;
   els.promoOn.textContent = data.promos.filter(isPromoOn).length;
   els.syncText.textContent = "Last sync: " + new Date().toLocaleString("ms-MY");
 }
 
 function renderStock() {
   if (!data.stock.length) {
-    els.stockGrid.innerHTML = `<div class="empty">Tiada data stock.</div>`;
+    els.stockGrid.innerHTML = `<div class="empty">Tiada data stock. Check Google Sheet STOCK_CONTROL.</div>`;
     return;
   }
 
@@ -268,16 +291,16 @@ function renderStock() {
     return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
   });
 
-  els.stockGrid.innerHTML = items.map((item, i) => {
-    const status = norm(item.status) === "OFF" ? "OFF" : "ON";
-    const section = item.section === "ALL" ? "Semua plan" : item.section;
+  els.stockGrid.innerHTML = items.map((item, index) => {
+    const status = normalize(item.status) === "OFF" ? "OFF" : "ON";
+    const sectionText = item.section === "ALL" ? "Semua plan" : item.section;
 
     return `
-      <article class="item" data-i="${i}">
+      <article class="item" data-index="${index}">
         <div class="item-top">
           <div>
             <div class="title">${safe(item.product)}</div>
-            <div class="subtitle">${safe(section)}</div>
+            <div class="subtitle">${safe(sectionText)}</div>
           </div>
           <span class="pill ${status === "ON" ? "on" : "off"}">${status === "ON" ? "ON" : "HABIS STOK"}</span>
         </div>
@@ -291,6 +314,7 @@ function renderStock() {
                 <option value="OFF" ${status === "OFF" ? "selected" : ""}>OFF - Habis Stok</option>
               </select>
             </div>
+
             <div>
               <label class="field-label">Text Habis Stok</label>
               <input class="input stock-text" type="text" value="${safeAttr(item.stockText || "Habis Stok")}">
@@ -307,8 +331,8 @@ function renderStock() {
     `;
   }).join("");
 
-  els.stockGrid.querySelectorAll(".item").forEach((card, i) => {
-    const item = items[i];
+  els.stockGrid.querySelectorAll(".item").forEach((card, index) => {
+    const item = items[index];
 
     card.querySelector(".stock-on").addEventListener("click", () => {
       card.querySelector(".stock-status").value = "ON";
@@ -325,11 +349,11 @@ function renderStock() {
 }
 
 async function saveStock(card, item) {
-  const btn = card.querySelector(".stock-save");
+  const button = card.querySelector(".stock-save");
   const status = card.querySelector(".stock-status").value;
   const stockText = card.querySelector(".stock-text").value.trim() || "Habis Stok";
 
-  setLoading(btn, true, "Saving...");
+  setLoading(button, true, "Saving...");
 
   try {
     const result = await jsonp({
@@ -341,23 +365,27 @@ async function saveStock(card, item) {
       stockText
     });
 
-    if (!result.ok) throw new Error(result.error || "Gagal save stock.");
+    if (!result.ok) {
+      throw new Error(result.error || "Gagal save stock.");
+    }
 
-    msg(els.globalMsg, `Stock ${item.product} berjaya disimpan.`, "success");
+    showMessage(els.globalMsg, `Stock ${item.product} berjaya disimpan.`, "success");
     await loadData();
+
   } catch (error) {
-    msg(els.globalMsg, "Gagal save stock: " + error.message, "error");
+    showMessage(els.globalMsg, "Gagal save stock: " + error.message, "error");
   } finally {
-    setLoading(btn, false, "Save Stock");
+    setLoading(button, false, "Save Stock");
   }
 }
 
 function renderPromos() {
-  const query = norm(els.search.value);
+  const query = normalize(els.search.value);
   const allPlans = flattenPlans();
 
   const items = allPlans.map(plan => {
     const promo = findPromo(plan.product, plan.section, plan.duration) || {};
+
     return {
       ...plan,
       promoActive: promo.promoActive || "NO",
@@ -369,7 +397,8 @@ function renderPromos() {
     };
   }).filter(item => {
     if (!query) return true;
-    return norm(`${item.product} ${item.section} ${item.duration} ${item.price}`).includes(query);
+
+    return normalize(`${item.product} ${item.section} ${item.duration} ${item.price}`).includes(query);
   });
 
   if (!items.length) {
@@ -377,10 +406,10 @@ function renderPromos() {
     return;
   }
 
-  els.promoGrid.innerHTML = items.map((item, i) => promoCard(item, i)).join("");
+  els.promoGrid.innerHTML = items.map((item, index) => renderPromoCard(item, index)).join("");
 
-  els.promoGrid.querySelectorAll(".item").forEach((card, i) => {
-    const item = items[i];
+  els.promoGrid.querySelectorAll(".item").forEach((card, index) => {
+    const item = items[index];
 
     const active = card.querySelector(".promo-active");
     const price = card.querySelector(".promo-price");
@@ -400,13 +429,18 @@ function renderPromos() {
       pricePreview.textContent = price.value.trim() || item.price;
     };
 
-    [active, price, preset, custom, color, note].forEach(el => el.addEventListener("input", updatePreview));
-    preset.addEventListener("change", updatePreview);
-    color.addEventListener("change", updatePreview);
+    [active, price, preset, custom, color, note].forEach(element => {
+      element.addEventListener("input", updatePreview);
+      element.addEventListener("change", updatePreview);
+    });
 
     card.querySelector(".promo-on").addEventListener("click", () => {
       active.value = "YES";
-      if (!price.value.trim()) price.value = item.price;
+
+      if (!price.value.trim()) {
+        price.value = item.price;
+      }
+
       updatePreview();
     });
 
@@ -431,17 +465,17 @@ function renderPromos() {
   });
 }
 
-function promoCard(item, i) {
+function renderPromoCard(item, index) {
   const active = isPromoOn(item) ? "YES" : "NO";
   const badgeText = item.badgePreset === "Custom" ? (item.badgeCustomText || "Promo") : (item.badgePreset || "Promo");
-  const section = item.section === "ALL" ? "Semua plan" : item.section;
+  const sectionText = item.section === "ALL" ? "Semua plan" : item.section;
 
   return `
-    <article class="item" data-i="${i}">
+    <article class="item" data-index="${index}">
       <div class="item-top">
         <div>
           <div class="title">${safe(item.product)} • ${safe(item.duration)}</div>
-          <div class="subtitle">${safe(section)} • Harga asal ${safe(item.price)}</div>
+          <div class="subtitle">${safe(sectionText)} • Harga asal ${safe(item.price)}</div>
         </div>
         <span class="pill ${active === "YES" ? "promo" : "off"}">${active === "YES" ? "PROMO ON" : "PROMO OFF"}</span>
       </div>
@@ -462,6 +496,7 @@ function promoCard(item, i) {
               <option value="YES" ${active === "YES" ? "selected" : ""}>ON</option>
             </select>
           </div>
+
           <div>
             <label class="field-label">Promo Price</label>
             <input class="input promo-price" type="text" placeholder="Contoh: RM20" value="${safeAttr(item.promoPrice || "")}">
@@ -472,13 +507,14 @@ function promoCard(item, i) {
           <div>
             <label class="field-label">Badge Preset</label>
             <select class="select badge-preset">
-              ${BADGE_PRESETS.map(x => `<option value="${safeAttr(x)}" ${x === item.badgePreset ? "selected" : ""}>${safe(x)}</option>`).join("")}
+              ${BADGE_PRESETS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgePreset ? "selected" : ""}>${safe(option)}</option>`).join("")}
             </select>
           </div>
+
           <div>
             <label class="field-label">Badge Color</label>
             <select class="select badge-color">
-              ${BADGE_COLORS.map(x => `<option value="${safeAttr(x)}" ${x === item.badgeColor ? "selected" : ""}>${safe(x)}</option>`).join("")}
+              ${BADGE_COLORS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgeColor ? "selected" : ""}>${safe(option)}</option>`).join("")}
             </select>
           </div>
         </div>
@@ -506,7 +542,8 @@ function promoCard(item, i) {
 }
 
 async function savePromo(card, item) {
-  const btn = card.querySelector(".promo-save");
+  const button = card.querySelector(".promo-save");
+
   const promoActive = card.querySelector(".promo-active").value;
   const promoPrice = card.querySelector(".promo-price").value.trim();
   const badgePreset = card.querySelector(".badge-preset").value;
@@ -515,16 +552,16 @@ async function savePromo(card, item) {
   const note = card.querySelector(".promo-note").value.trim();
 
   if (promoActive === "YES" && !promoPrice) {
-    msg(els.globalMsg, "Isi Promo Price dulu kalau Promo Active = ON.", "error");
+    showMessage(els.globalMsg, "Isi Promo Price dulu kalau Promo Active = ON.", "error");
     return;
   }
 
   if (badgePreset === "Custom" && !badgeCustomText) {
-    msg(els.globalMsg, "Isi Custom Badge Text dulu kalau pilih Custom.", "error");
+    showMessage(els.globalMsg, "Isi Custom Badge Text dulu kalau pilih Custom.", "error");
     return;
   }
 
-  setLoading(btn, true, "Saving...");
+  setLoading(button, true, "Saving...");
 
   try {
     const result = await jsonp({
@@ -541,14 +578,17 @@ async function savePromo(card, item) {
       note
     });
 
-    if (!result.ok) throw new Error(result.error || "Gagal save promo.");
+    if (!result.ok) {
+      throw new Error(result.error || "Gagal save promo.");
+    }
 
-    msg(els.globalMsg, `Promo ${item.product} ${item.duration} berjaya disimpan.`, "success");
+    showMessage(els.globalMsg, `Promo ${item.product} ${item.duration} berjaya disimpan.`, "success");
     await loadData();
+
   } catch (error) {
-    msg(els.globalMsg, "Gagal save promo: " + error.message, "error");
+    showMessage(els.globalMsg, "Gagal save promo: " + error.message, "error");
   } finally {
-    setLoading(btn, false, "Save Promo");
+    setLoading(button, false, "Save Promo");
   }
 }
 
@@ -561,6 +601,7 @@ function jsonp(params) {
     });
 
     const script = document.createElement("script");
+
     const timer = setTimeout(() => {
       cleanup();
       reject(new Error("Request timeout. Check Apps Script deployment."));
@@ -574,7 +615,10 @@ function jsonp(params) {
     function cleanup() {
       clearTimeout(timer);
       delete window[callbackName];
-      if (script.parentNode) script.parentNode.removeChild(script);
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     }
 
     script.onerror = () => {
@@ -588,12 +632,18 @@ function jsonp(params) {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll(".tab").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
-  document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === tab));
+  document.querySelectorAll(".tab").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === tab);
+  });
+
+  document.querySelectorAll(".section").forEach(section => {
+    section.classList.toggle("active", section.id === tab);
+  });
 }
 
 function flattenPlans() {
   const list = [];
+
   BASE_PRODUCTS.forEach(product => {
     product.plans.forEach(plan => {
       list.push({
@@ -604,59 +654,67 @@ function flattenPlans() {
       });
     });
   });
+
   return list;
 }
 
 function findPromo(product, section, duration) {
   return data.promos.find(item =>
-    norm(item.product) === norm(product) &&
-    norm(item.section || "ALL") === norm(section || "ALL") &&
-    norm(item.duration) === norm(duration)
+    normalize(item.product) === normalize(product) &&
+    normalize(item.section || "ALL") === normalize(section || "ALL") &&
+    normalize(item.duration) === normalize(duration)
   );
 }
 
 function isPromoOn(item) {
-  return norm(item.promoActive) === "YES" || norm(item.promoActive) === "ON";
+  return normalize(item.promoActive) === "YES" || normalize(item.promoActive) === "ON";
 }
 
 function badgeClass(color) {
-  const c = norm(color);
-  if (c === "GREEN") return "badge-green";
-  if (c === "RED") return "badge-red";
-  if (c === "BLUE") return "badge-blue";
-  if (c === "PURPLE" || c === "PINK") return "badge-purple";
-  if (c === "DARK" || c === "BLACK") return "badge-dark";
+  const value = normalize(color);
+
+  if (value === "GREEN") return "badge-green";
+  if (value === "RED") return "badge-red";
+  if (value === "BLUE") return "badge-blue";
+  if (value === "PURPLE" || value === "PINK") return "badge-purple";
+  if (value === "DARK" || value === "BLACK") return "badge-dark";
+
   return "badge-gold";
 }
 
-function setLoading(btn, loading, text) {
-  if (!btn) return;
+function setLoading(button, loading, text) {
+  if (!button) return;
+
   if (loading) {
-    btn.dataset.oldText = btn.textContent;
-    btn.textContent = text || "Loading...";
-    btn.disabled = true;
+    button.dataset.oldText = button.textContent;
+    button.textContent = text || "Loading...";
+    button.disabled = true;
   } else {
-    btn.textContent = btn.dataset.oldText || btn.textContent;
-    btn.disabled = false;
+    button.textContent = button.dataset.oldText || button.textContent;
+    button.disabled = false;
   }
 }
 
-function msg(el, message, type = "info") {
-  if (!el) return;
-  el.textContent = message;
-  el.className = "message show " + type;
+function showMessage(element, message, type = "info") {
+  if (!element) return;
+
+  element.textContent = message;
+  element.className = "message show " + type;
+
   if (type === "success") {
-    clearTimeout(el._timer);
-    el._timer = setTimeout(() => el.classList.remove("show"), 4500);
+    clearTimeout(element._timer);
+    element._timer = setTimeout(() => {
+      element.classList.remove("show");
+    }, 4500);
   }
 }
 
-function norm(v = "") {
-  return String(v || "").trim().toUpperCase();
+function normalize(value = "") {
+  return String(value || "").trim().toUpperCase();
 }
 
-function safe(v = "") {
-  return String(v ?? "")
+function safe(value = "") {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -664,6 +722,6 @@ function safe(v = "") {
     .replaceAll("'", "&#039;");
 }
 
-function safeAttr(v = "") {
-  return safe(v);
+function safeAttr(value = "") {
+  return safe(value);
 }
