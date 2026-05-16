@@ -1,40 +1,30 @@
-NUMO ADMIN PANEL V3 - CLEAN WHITE
+NUMO ADMIN PANEL V3.1 - DASHBOARD DETAIL UPDATE
 
 Fail dalam zip:
 - index.html
 - app.js
 - README.txt
 
+Apa yang baru:
+1. Dashboard masih tunjuk count Stock ON, Stock OFF dan Promo Aktif.
+2. Detail tidak dipaparkan terus.
+3. Ada dua panel yang boleh diklik:
+   - Produk / Device Stock OFF
+   - Plan Promo Aktif
+4. Bila klik panel, baru keluar list.
+5. Bila klik item list:
+   - Stock OFF akan terus buka tab Stok Produk dan scroll ke item edit.
+   - Promo Aktif akan terus buka tab Promo Plan, buka accordion produk, dan scroll ke plan edit.
+
 Cara guna:
-1. Upload index.html dan app.js ke Netlify admin panel.
+1. Upload/replace index.html dan app.js admin panel Netlify dengan file dalam zip ini.
 2. Jangan rename apa-apa.
-3. Buka domain Netlify admin panel.
-4. Login guna password Apps Script.
-   Default kalau belum tukar: numo12345
+3. Login semula.
+4. Check Dashboard.
+5. Klik "Produk / Device Stock OFF" atau "Plan Promo Aktif".
+6. Klik item dalam list untuk terus edit.
 
-Apps Script:
-- Tak perlu tukar jika Apps Script kau sudah SIMPLE-V3-JSONP.
-- Link API yang digunakan:
+Apps Script tidak perlu tukar jika sudah SIMPLE-V3-JSONP.
+
+Link API:
 https://script.google.com/macros/s/AKfycbwqqBJ1A9tqYhPhEJe37Ik3-HGKZOHUUHqdf_jtLJuTv8tqQpt6WqX5jUBQwKPMbM92tw/exec
-
-PENTING UNTUK SOOKA DEVICE:
-Untuk Sooka ada pilihan TV / Phone / Tablet, STOCK_CONTROL perlu ada row ini:
-
-Product,Section,Status,Stock Text,Updated At
-SOOKA PREMIUM,TV,ON,Habis Stok,
-SOOKA PREMIUM,PHONE,ON,Habis Stok,
-SOOKA PREMIUM,TABLET,ON,Habis Stok,
-
-Cara update:
-1. Buka Google Sheet NUMO WEBSITE CONTROL.
-2. Pergi tab STOCK_CONTROL.
-3. Kalau masih ada row "SOOKA PREMIUM | ALL", boleh biarkan dulu atau padam.
-4. Tambah 3 row di atas.
-5. Refresh admin panel.
-6. Bahagian Sooka Device akan boleh tekan ON/OFF untuk TV, Phone dan Tablet.
-
-Nota:
-- Produk biasa masih by produk.
-- YouTube masih ada Email Sendiri dan Email Seller.
-- Promo masih ikut setiap plan/harga.
-- Layout V3 lebih clean, white dan tersusun dengan accordion promo.
