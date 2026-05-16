@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>NUMO Admin Panel V3.1</title>
+  <title>NUMO Admin Panel</title>
   <meta name="description" content="Clean white admin panel untuk kawal stok produk dan promo NUMO VENTURES." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,8 +161,8 @@
       <div class="brand">
         <div class="brand-mark">N</div>
         <div>
-          <strong>NUMO Admin Panel V3.1</strong>
-          <span>Clean White Control</span>
+          <strong>NUMO Admin Panel</strong>
+          <span>Stock & Promo center</span>
         </div>
       </div>
       <div class="top-actions">
@@ -175,11 +175,10 @@
   <main class="page">
     <section class="hero">
       <div class="hero-content">
-        <span class="label">✨ Clean White Dashboard</span>
-        <h1>Control stok & promo lebih kemas</h1>
+        <span class="label">✨ Jangan sidai orang</span>
+        <h1>Control stok & promo di sini</h1>
         <p>
-          Dashboard sekarang boleh tunjuk detail stock off dan promo aktif bila ditekan.
-          Tekan item dalam list untuk terus pergi ke bahagian edit.
+          Tempat admin boleh control stock dan buat promo bila bila masa. Hanya di hujung jari
         </p>
       </div>
     </section>
@@ -188,9 +187,9 @@
       <div class="login-grid">
         <div>
           <label class="field-label" for="password">Admin Password</label>
-          <input id="password" class="input" type="password" placeholder="Masukkan password Apps Script">
+          <input id="password" class="input" type="password" placeholder="Hint: Honda HRV">
         </div>
-        <button id="loginBtn" class="btn" type="button">Login Admin</button>
+        <button id="loginBtn" class="btn" type="button">LOG IN</button>
       </div>
       <div id="loginMsg" class="message"></div>
     </section>
@@ -208,7 +207,7 @@
         <section id="dashboard" class="section active">
           <div class="section-head">
             <h2>Dashboard</h2>
-            <p>Ringkasan status website customer berdasarkan data dari Google Sheet.</p>
+            <p>Ringkasan status website customer. Data di ambil dari Google Sheet.</p>
           </div>
 
           <div class="summary-grid">
@@ -228,7 +227,7 @@
 
           <div class="dashboard-note">
             <p><strong>Last Sync:</strong> <span id="syncText">Belum sync.</span></p>
-            <p>Tekan detail di bawah untuk lihat item bermasalah atau promo aktif. Detail tidak dipaparkan terus supaya dashboard kekal kemas.</p>
+            <p>Tekan detail di bawah untuk lihat item atau promo yang aktif.</p>
           </div>
 
           <div class="dash-detail-grid">
@@ -236,7 +235,7 @@
               <button class="dash-detail-trigger" type="button" data-detail="stockOffDetail">
                 <div class="dash-detail-title">
                   <strong>Produk / Device Stock OFF</strong>
-                  <span>Tekan untuk lihat item yang habis stok</span>
+                  <span>Tekan untuk lihat item yang kehabisan stok</span>
                 </div>
                 <span id="stockOffDetailCount" class="dash-detail-count">0</span>
               </button>
@@ -260,7 +259,7 @@
           <div class="section-head">
             <h2>Stok Produk</h2>
             <p>
-              Produk biasa control by produk. YouTube control asing untuk Email Sendiri dan Email Seller.
+              Stock control by produk. YouTube control asing untuk Email Sendiri dan Email Seller.
               Sooka control by device: TV, Phone dan Tablet.
             </p>
           </div>
@@ -280,7 +279,7 @@
           <div class="section-head">
             <h2>Promo Plan</h2>
             <p>
-              Promo disusun ikut produk. Buka produk yang nak edit sahaja supaya tak nampak serabut.
+              Promo disusun mengikut produk. Tekan buka produk yang nak edit
             </p>
           </div>
 
@@ -306,7 +305,7 @@
       </div>
     </section>
 
-    <p class="footer">NUMO VENTURES Admin Panel V3.1 • Jangan share password admin.</p>
+    <p class="footer">NUMO VENTURES Admin Panel•</p>
   </main>
 
   <script src="app.js"></script>
