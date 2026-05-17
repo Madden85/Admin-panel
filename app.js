@@ -236,6 +236,76 @@ const STOCK_GROUPS = [
   }
 ];
 
+
+const STOCK_DISPLAY_GROUPS = [
+  {
+    id: "netflix",
+    title: "Netflix Premium",
+    icon: "🎬",
+    rows: [
+      { product: "NETFLIX PREMIUM", section: "ALL", label: "Netflix Premium", note: "Semua plan Netflix" }
+    ]
+  },
+  {
+    id: "youtube-own",
+    title: "YouTube Premium - Email Sendiri",
+    icon: "▶️",
+    rows: [
+      { product: "YOUTUBE PREMIUM", section: "Email Sendiri", label: "Email Sendiri", note: "YouTube Own Email" }
+    ]
+  },
+  {
+    id: "youtube-seller",
+    title: "YouTube Premium - Email Seller",
+    icon: "▶️",
+    rows: [
+      { product: "YOUTUBE PREMIUM", section: "Email Seller", label: "Email Seller", note: "YouTube Seller Email" }
+    ]
+  },
+  {
+    id: "disney",
+    title: "Disney+ Hotstar",
+    icon: "🏰",
+    rows: [
+      { product: "DISNEY+ HOTSTAR", section: "ALL", label: "Disney+ Hotstar", note: "Semua plan Disney" }
+    ]
+  },
+  {
+    id: "sooka",
+    title: "Sooka Premium",
+    icon: "📡",
+    rows: [
+      { product: "SOOKA PREMIUM", section: "TV", label: "TV", note: "Sooka untuk TV" },
+      { product: "SOOKA PREMIUM", section: "PHONE", label: "Phone", note: "Sooka untuk phone" },
+      { product: "SOOKA PREMIUM", section: "TABLET", label: "Tablet", note: "Sooka untuk tablet" }
+    ]
+  },
+  {
+    id: "viu",
+    title: "Viu Premium",
+    icon: "📱",
+    rows: [
+      { product: "VIU PREMIUM", section: "ALL", label: "Viu Premium", note: "Semua plan Viu" }
+    ]
+  },
+  {
+    id: "iqiyi",
+    title: "iQiyi Premium",
+    icon: "🎥",
+    rows: [
+      { product: "iQIYI PREMIUM", section: "ALL", label: "iQiyi Premium", note: "Semua plan iQiyi" }
+    ]
+  },
+  {
+    id: "spotify",
+    title: "Spotify Premium",
+    icon: "🎧",
+    rows: [
+      { product: "SPOTIFY PREMIUM", section: "ALL", label: "Spotify Premium", note: "Semua plan Spotify" }
+    ]
+  }
+];
+
 let data = { stock: [], promos: [], meta: {} };
 let adminPassword = sessionStorage.getItem("numoAdminPasswordPanelV40") || "";
 let loggedIn = Boolean(adminPassword);
@@ -538,23 +608,9 @@ function renderPromoActiveList(items) {
 }
 
 function renderStock() {
-  els.stockGrid.innerHTML = STOCK_GROUPS.map(group => `
-    <article class="stock-group ${group.full ? "full" : ""}">
-      <div class="group-head">
-        <div>
-          <strong>${safeText(group.title)}</strong>
-          <span>${safeText(group.subtitle)}</span>
-        </div>
-        <span class="status-pill gray">${group.rows.length} control</span>
-      </div>
+  els.stockGrid.innerHTML = STOCK_DISPLAY_GROUPS.map(group => renderStockGroup(group)).join("");
 
-      <div>
-        ${group.rows.map(row => renderStockRow(row)).join("")}
-      </div>
-    </article>
-  `).join("");
-
-  els.stockGrid.querySelectorAll(".stock-row").forEach(row => {
+  els.stockGrid.querySelectorAll(".stock-edit-row").forEach(row => {
     const onBtn = row.querySelector(".toggle-on");
     const offBtn = row.querySelector(".toggle-off");
     const saveBtn = row.querySelector(".stock-save");
@@ -563,6 +619,7 @@ function renderStock() {
     const setStatus = status => {
       row.dataset.status = status;
       updateStockVisual(row);
+      updateStockGroupSummary(row.closest(".stock-product-card"));
     };
 
     onBtn?.addEventListener("click", () => setStatus("ON"));
@@ -572,6 +629,26 @@ function renderStock() {
 
     updateStockVisual(row);
   });
+
+  els.stockGrid.querySelectorAll(".stock-product-card").forEach(card => updateStockGroupSummary(card));
+}
+
+function renderStockGroup(group) {
+  return `
+    <details id="stock-group-${safeAttr(group.id)}" class="stock-product-card">
+      <summary>
+        <span class="stock-product-title">
+          <strong>${safeText(group.icon + " " + group.title)}</strong>
+          <span class="stock-group-subtitle" data-group-subtitle></span>
+        </span>
+        <span class="stock-arrow">›</span>
+      </summary>
+
+      <div class="stock-product-body">
+        ${group.rows.map(row => renderStockRow(row)).join("")}
+      </div>
+    </details>
+  `;
 }
 
 function renderStockRow(row) {
@@ -582,15 +659,15 @@ function renderStockRow(row) {
 
   return `
     <div id="${stockDomId(row.product, row.section)}"
-      class="stock-row"
+      class="stock-edit-row"
       data-product="${safeAttr(row.product)}"
       data-section="${safeAttr(row.section)}"
       data-status="${safeAttr(status)}">
 
-      <div class="stock-top">
+      <div class="stock-edit-head">
         <div>
-          <div class="stock-name">${safeText(row.label)}</div>
-          <div class="stock-note">${safeText(row.note)} • Section: ${safeText(row.section)}</div>
+          <div class="stock-edit-name">${safeText(row.label)}</div>
+          <div class="stock-edit-sub">${safeText(row.note)} • Section: ${safeText(row.section)}</div>
         </div>
         <span class="status-pill"></span>
       </div>
@@ -634,6 +711,35 @@ function updateStockVisual(row) {
 
   pill.className = "status-pill " + (status === "OFF" ? "off" : "");
   pill.textContent = status === "OFF" ? uiText.offLabel : uiText.onLabel;
+}
+
+function updateStockGroupSummary(card) {
+  if (!card) return;
+
+  const rows = [...card.querySelectorAll(".stock-edit-row")];
+  const subtitle = card.querySelector("[data-group-subtitle]");
+
+  const total = rows.length;
+  const onCount = rows.filter(row => row.dataset.status === "ON").length;
+  const offCount = rows.filter(row => row.dataset.status === "OFF").length;
+  const missingCount = rows.filter(row => row.dataset.status === "MISSING").length;
+
+  let text = "";
+
+  if (total === 1) {
+    if (missingCount) {
+      text = uiText.setupNeeded;
+    } else {
+      text = onCount ? uiText.onLabel : uiText.offLabel;
+    }
+  } else {
+    text = `${total} control • ${onCount} ${uiText.onLabel}`;
+
+    if (offCount) text += ` • ${offCount} ${uiText.offLabel}`;
+    if (missingCount) text += ` • ${missingCount} ${uiText.setupNeeded}`;
+  }
+
+  if (subtitle) subtitle.textContent = text;
 }
 
 async function saveStock(row, stockText) {
@@ -903,6 +1009,10 @@ function jumpToStock(product, section) {
 
   setTimeout(() => {
     const target = document.getElementById(stockDomId(product, section));
+    if (target) {
+      const parent = target.closest(".stock-product-card");
+      if (parent) parent.open = true;
+    }
     highlightAndScroll(target);
   }, 120);
 }

@@ -858,6 +858,128 @@
         padding: 10px;
       }
     }
+  
+    /* V4.2 STOCK CARD STYLE - same feel as Promo */
+    .stock-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stock-product-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #ffffff;
+      overflow: hidden;
+      scroll-margin-top: 92px;
+    }
+
+    .stock-product-card summary {
+      list-style: none;
+      cursor: pointer;
+      background: #f8fafc;
+      padding: 17px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stock-product-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .stock-product-title {
+      min-width: 0;
+    }
+
+    .stock-product-title strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    .stock-product-title span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .stock-arrow {
+      flex: 0 0 auto;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--dark);
+      transform: rotate(0deg);
+      transition: transform 0.2s ease;
+    }
+
+    .stock-product-card[open] .stock-arrow {
+      transform: rotate(90deg);
+    }
+
+    .stock-product-body {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .stock-edit-row {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #f8fafc;
+      padding: 13px;
+      scroll-margin-top: 92px;
+    }
+
+    .stock-edit-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 11px;
+    }
+
+    .stock-edit-name {
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 3px;
+    }
+
+    .stock-edit-sub {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 560px) {
+      .stock-product-card summary {
+        padding: 16px 14px;
+      }
+
+      .stock-product-title strong {
+        font-size: 16px;
+      }
+
+      .stock-product-title span {
+        font-size: 12.5px;
+      }
+
+      .stock-arrow {
+        font-size: 24px;
+      }
+
+      .stock-product-body {
+        padding: 10px;
+      }
+    }
+
   </style>
 </head>
 
