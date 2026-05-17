@@ -1,6 +1,10 @@
 /***********************
- * NUMO ADMIN PANEL V3.1 - CLEAN WHITE
- * Dashboard detail: click to reveal stock OFF & active promo
+ * NUMO ADMIN PANEL - APP.JS
+ * FUNCTION / LOGIC SAHAJA
+ *
+ * index.html  = mainpage/layout admin
+ * index2.html = edit ayat besar
+ * app2.js     = edit text button/label
  ***********************/
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwqqBJ1A9tqYhPhEJe37Ik3-HGKZOHUUHqdf_jtLJuTv8tqQpt6WqX5jUBQwKPMbM92tw/exec";
@@ -20,23 +24,98 @@ const BADGE_PRESETS = [
 
 const BADGE_COLORS = ["Gold", "Green", "Red", "Blue", "Purple", "Dark"];
 
-const BASE_GROUPS = [
+let uiText = {
+  refresh: "Refresh",
+  logout: "Logout",
+  login: "Login",
+  checking: "Checking...",
+  loading: "Loading...",
+  saving: "Saving...",
+  passwordLabel: "Admin Password",
+  passwordPlaceholder: "Masukkan password admin",
+  tabDashboard: "Dashboard",
+  tabStock: "Stock",
+  tabPromo: "Promo",
+  stockOnLabel: "Stock ON",
+  stockOffLabel: "Stock OFF",
+  promoOnLabel: "Promo Aktif",
+  editLabel: "Edit",
+  noStockOff: "Tiada produk/device yang OFF.",
+  noPromoActive: "Tiada promo aktif.",
+  textWhenOff: "Text bila OFF",
+  statusLabel: "Status",
+  onLabel: "ON",
+  offLabel: "OFF",
+  save: "Save",
+  setupNeeded: "SETUP NEEDED",
+  stockOffTextDefault: "Habis Stok",
+  promoSearchPlaceholder: "Cari produk atau plan",
+  filterAll: "Semua plan",
+  filterOn: "Promo ON sahaja",
+  filterOff: "Promo OFF sahaja",
+  promoActive: "Promo Active",
+  promoPrice: "Promo Price",
+  badgePreset: "Badge Preset",
+  badgeColor: "Badge Color",
+  customBadgeText: "Custom Badge Text",
+  promoNote: "Promo Note",
+  promoOnButton: "Promo ON",
+  promoOffButton: "Promo OFF",
+  clearButton: "Clear",
+  savePromo: "Save Promo",
+  preview: "Preview:",
+  normalPrice: "Harga asal",
+  promoOnStatus: "PROMO ON",
+  promoOffStatus: "PROMO OFF",
+  noPlanFound: "Tiada plan dijumpai.",
+  enterPassword: "Masukkan password dulu.",
+  loginSuccess: "Login berjaya. Loading data...",
+  loginFailed: "Login gagal: ",
+  logoutSuccess: "Logout berjaya.",
+  loadData: "Loading data dari Google Sheet...",
+  syncSuccess: "Data berjaya sync.",
+  loadFailed: "Gagal load data: ",
+  saveStockSuccess: "Stock berjaya disimpan.",
+  saveStockFailed: "Gagal save stock: ",
+  savePromoSuccess: "Promo berjaya disimpan.",
+  savePromoFailed: "Gagal save promo: ",
+  promoPriceRequired: "Isi Promo Price dulu kalau Promo Active = ON.",
+  customBadgeRequired: "Isi Custom Badge Text dulu kalau pilih Custom."
+};
+
+let editableContent = {
+  brandName: "NUMO Admin Panel",
+  brandSubtitle: "Clean Stock & Promo Control",
+  heroBadge: "ADMIN CONTROL",
+  heroTitle: "Kawal stock dan promo dengan lebih mudah.",
+  heroText: "Layout simple untuk edit stock, promo price, promo badge dan Sooka device.",
+  dashboardTitle: "Dashboard",
+  dashboardText: "Ringkasan status website customer daripada Google Sheet.",
+  stockOffDetailTitle: "Produk / Device Stock OFF",
+  stockOffDetailText: "Tekan untuk lihat item yang habis stok",
+  promoActiveDetailTitle: "Plan Promo Aktif",
+  promoActiveDetailText: "Tekan untuk lihat promo yang sedang ON",
+  stockTitle: "Stock Control",
+  stockText: "Set ON/OFF untuk produk, YouTube type dan Sooka device.",
+  promoTitle: "Promo Control",
+  promoText: "Buka produk yang nak edit sahaja supaya panel kekal kemas."
+};
+
+const PRODUCT_GROUPS = [
   {
-    key: "NETFLIX PREMIUM||ALL",
     product: "NETFLIX PREMIUM",
     section: "ALL",
     label: "Netflix Premium",
     icon: "🎬",
     plans: [
       { duration: "1 Bulan", price: "RM25" },
-      { duration: "2 Bulan", price: "RM45" },
-      { duration: "3 Bulan Promo", price: "RM60" },
-      { duration: "6 Bulan", price: "RM120" },
-      { duration: "12 Bulan", price: "RM230" }
+      { duration: "2 Bulan", price: "RM50" },
+      { duration: "3 Bulan Promo", label: "3 Bulan", price: "RM75" },
+      { duration: "6 Bulan", price: "RM150" },
+      { duration: "12 Bulan", price: "RM300" }
     ]
   },
   {
-    key: "YOUTUBE PREMIUM||Email Sendiri",
     product: "YOUTUBE PREMIUM",
     section: "Email Sendiri",
     label: "YouTube Premium - Email Sendiri",
@@ -49,7 +128,6 @@ const BASE_GROUPS = [
     ]
   },
   {
-    key: "YOUTUBE PREMIUM||Email Seller",
     product: "YOUTUBE PREMIUM",
     section: "Email Seller",
     label: "YouTube Premium - Email Seller",
@@ -62,7 +140,6 @@ const BASE_GROUPS = [
     ]
   },
   {
-    key: "DISNEY+ HOTSTAR||ALL",
     product: "DISNEY+ HOTSTAR",
     section: "ALL",
     label: "Disney+ Hotstar",
@@ -70,13 +147,12 @@ const BASE_GROUPS = [
     plans: [
       { duration: "1 Bulan", price: "RM25" },
       { duration: "2 Bulan", price: "RM45" },
-      { duration: "Promo 3 Bulan", price: "RM60" },
+      { duration: "Promo 3 Bulan", label: "3 Bulan", price: "RM60" },
       { duration: "6 Bulan", price: "RM120" },
       { duration: "12 Bulan", price: "RM230" }
     ]
   },
   {
-    key: "SOOKA PREMIUM||ALL",
     product: "SOOKA PREMIUM",
     section: "ALL",
     label: "Sooka Premium",
@@ -89,7 +165,6 @@ const BASE_GROUPS = [
     ]
   },
   {
-    key: "VIU PREMIUM||ALL",
     product: "VIU PREMIUM",
     section: "ALL",
     label: "Viu Premium",
@@ -102,7 +177,6 @@ const BASE_GROUPS = [
     ]
   },
   {
-    key: "iQIYI PREMIUM||ALL",
     product: "iQIYI PREMIUM",
     section: "ALL",
     label: "iQiyi Premium",
@@ -110,13 +184,12 @@ const BASE_GROUPS = [
     plans: [
       { duration: "1 Bulan", price: "RM15" },
       { duration: "2 Bulan", price: "RM26" },
-      { duration: "Promo 3 Bulan", price: "RM33" },
+      { duration: "Promo 3 Bulan", label: "3 Bulan", price: "RM33" },
       { duration: "6 Bulan", price: "RM66" },
       { duration: "12 Bulan", price: "RM120" }
     ]
   },
   {
-    key: "SPOTIFY PREMIUM||ALL",
     product: "SPOTIFY PREMIUM",
     section: "ALL",
     label: "Spotify Premium",
@@ -124,7 +197,7 @@ const BASE_GROUPS = [
     plans: [
       { duration: "1 Bulan", price: "RM15" },
       { duration: "2 Bulan", price: "RM28" },
-      { duration: "Promo 2 Bulan", price: "RM25" },
+      { duration: "Promo 2 Bulan", label: "2 Bulan Promo", price: "RM25" },
       { duration: "6 Bulan", price: "RM72" },
       { duration: "12 Bulan", price: "RM120" }
     ]
@@ -135,8 +208,6 @@ const STOCK_GROUPS = [
   {
     title: "Produk Biasa",
     subtitle: "Satu toggle untuk semua plan produk tersebut",
-    icon: "📦",
-    className: "",
     rows: [
       { product: "NETFLIX PREMIUM", section: "ALL", label: "Netflix Premium", note: "Semua plan Netflix" },
       { product: "DISNEY+ HOTSTAR", section: "ALL", label: "Disney+ Hotstar", note: "Semua plan Disney" },
@@ -148,8 +219,6 @@ const STOCK_GROUPS = [
   {
     title: "YouTube Premium",
     subtitle: "Control asing untuk Own Email dan Seller Email",
-    icon: "▶️",
-    className: "",
     rows: [
       { product: "YOUTUBE PREMIUM", section: "Email Sendiri", label: "Email Sendiri", note: "YouTube Own Email" },
       { product: "YOUTUBE PREMIUM", section: "Email Seller", label: "Email Seller", note: "YouTube Seller Email" }
@@ -157,9 +226,8 @@ const STOCK_GROUPS = [
   },
   {
     title: "Sooka Device",
-    subtitle: "Pilih device mana yang masih available",
-    icon: "📡",
-    className: "full",
+    subtitle: "Pilih device mana yang available",
+    full: true,
     rows: [
       { product: "SOOKA PREMIUM", section: "TV", label: "TV", note: "Sooka untuk TV" },
       { product: "SOOKA PREMIUM", section: "PHONE", label: "Phone", note: "Sooka untuk phone" },
@@ -169,55 +237,104 @@ const STOCK_GROUPS = [
 ];
 
 let data = { stock: [], promos: [], meta: {} };
-let adminPassword = sessionStorage.getItem("numoAdminPasswordV31") || "";
+let adminPassword = sessionStorage.getItem("numoAdminPasswordPanelV40") || "";
 let loggedIn = Boolean(adminPassword);
 
 const els = {};
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
+
+  await loadButtonText();
+  await loadEditableText();
+
+  applyButtonText();
+  applyEditableText();
   bindEvents();
 
   if (adminPassword) {
-    els.password.value = adminPassword;
-  }
-
-  if (loggedIn) {
+    els.passwordInput.value = adminPassword;
     showPanel();
     loadData();
   }
 });
 
 function cacheElements() {
-  els.loginCard = document.getElementById("loginCard");
-  els.panel = document.getElementById("panel");
-  els.password = document.getElementById("password");
-  els.loginBtn = document.getElementById("loginBtn");
-  els.loginMsg = document.getElementById("loginMsg");
-  els.globalMsg = document.getElementById("globalMsg");
-  els.logoutBtn = document.getElementById("logoutBtn");
-  els.refreshBtn = document.getElementById("refreshBtn");
-  els.stockOn = document.getElementById("stockOn");
-  els.stockOff = document.getElementById("stockOff");
-  els.promoOn = document.getElementById("promoOn");
-  els.syncText = document.getElementById("syncText");
-  els.stockLayout = document.getElementById("stockLayout");
-  els.sookaSetupWarning = document.getElementById("sookaSetupWarning");
-  els.promoGroups = document.getElementById("promoGroups");
-  els.search = document.getElementById("search");
-  els.promoFilter = document.getElementById("promoFilter");
-  els.stockOffDetail = document.getElementById("stockOffDetail");
-  els.promoActiveDetail = document.getElementById("promoActiveDetail");
-  els.stockOffList = document.getElementById("stockOffList");
-  els.promoActiveList = document.getElementById("promoActiveList");
-  els.stockOffDetailCount = document.getElementById("stockOffDetailCount");
-  els.promoActiveDetailCount = document.getElementById("promoActiveDetailCount");
+  [
+    "refreshBtn","logoutBtn","loginCard","panel","passwordInput","loginBtn","loginMsg","globalMsg",
+    "stockOnCount","stockOffCount","promoOnCount","stockOffDetailCount","promoActiveDetailCount",
+    "stockOffList","promoActiveList","stockGrid","promoSearch","promoFilter","promoGroups"
+  ].forEach(id => els[id] = document.getElementById(id));
+}
+
+async function loadButtonText() {
+  await new Promise(resolve => {
+    const script = document.createElement("script");
+    script.src = `app2.js?_=${Date.now()}`;
+
+    script.onload = () => {
+      if (window.NUMO_ADMIN_TEXT && typeof window.NUMO_ADMIN_TEXT === "object") {
+        uiText = { ...uiText, ...window.NUMO_ADMIN_TEXT };
+      }
+      resolve();
+    };
+
+    script.onerror = () => resolve();
+
+    document.head.appendChild(script);
+  });
+}
+
+async function loadEditableText() {
+  try {
+    const response = await fetch(`index2.html?_=${Date.now()}`);
+    if (!response.ok) throw new Error("index2.html not found");
+
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const root = doc.querySelector("#editable-content");
+    if (!root) throw new Error("editable-content not found");
+
+    root.querySelectorAll("[data-key]").forEach(item => {
+      editableContent[item.dataset.key] = item.textContent.trim();
+    });
+  } catch (error) {
+    console.warn("Using default index2 text:", error.message);
+  }
+}
+
+function applyButtonText() {
+  setText("refreshBtn", uiText.refresh);
+  setText("logoutBtn", uiText.logout);
+  setText("loginBtn", uiText.login);
+  setText("passwordLabel", uiText.passwordLabel);
+  setText("tabDashboard", uiText.tabDashboard);
+  setText("tabStock", uiText.tabStock);
+  setText("tabPromo", uiText.tabPromo);
+  setText("stockOnLabel", uiText.stockOnLabel);
+  setText("stockOffLabel", uiText.stockOffLabel);
+  setText("promoOnLabel", uiText.promoOnLabel);
+
+  if (els.passwordInput) els.passwordInput.placeholder = uiText.passwordPlaceholder;
+  if (els.promoSearch) els.promoSearch.placeholder = uiText.promoSearchPlaceholder;
+
+  if (els.promoFilter) {
+    els.promoFilter.innerHTML = `
+      <option value="ALL">${safeText(uiText.filterAll)}</option>
+      <option value="ON">${safeText(uiText.filterOn)}</option>
+      <option value="OFF">${safeText(uiText.filterOff)}</option>
+    `;
+  }
+}
+
+function applyEditableText() {
+  Object.keys(editableContent).forEach(key => setText(key, editableContent[key]));
 }
 
 function bindEvents() {
   els.loginBtn.addEventListener("click", login);
 
-  els.password.addEventListener("keydown", event => {
+  els.passwordInput.addEventListener("keydown", event => {
     if (event.key === "Enter") login();
   });
 
@@ -225,10 +342,9 @@ function bindEvents() {
 
   els.refreshBtn.addEventListener("click", () => {
     if (!loggedIn) {
-      showMessage(els.loginMsg, "Login dulu.", "info");
+      showMessage(els.loginMsg, uiText.enterPassword, "info");
       return;
     }
-
     loadData();
   });
 
@@ -236,27 +352,26 @@ function bindEvents() {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
 
-  document.querySelectorAll(".dash-detail-trigger").forEach(button => {
+  document.querySelectorAll(".detail-trigger").forEach(button => {
     button.addEventListener("click", () => {
-      const id = button.dataset.detail;
-      const card = document.getElementById(id);
+      const card = document.getElementById(button.dataset.detail);
       if (card) card.classList.toggle("open");
     });
   });
 
-  els.search.addEventListener("input", renderPromos);
+  els.promoSearch.addEventListener("input", renderPromos);
   els.promoFilter.addEventListener("change", renderPromos);
 }
 
 async function login() {
-  const password = els.password.value.trim();
+  const password = els.passwordInput.value.trim();
 
   if (!password) {
-    showMessage(els.loginMsg, "Masukkan password dulu.", "error");
+    showMessage(els.loginMsg, uiText.enterPassword, "error");
     return;
   }
 
-  setLoading(els.loginBtn, true, "Checking...");
+  setLoading(els.loginBtn, true, uiText.checking);
 
   try {
     const result = await jsonp({
@@ -264,37 +379,34 @@ async function login() {
       password
     });
 
-    if (!result.ok) {
-      throw new Error(result.error || "Password salah atau API error.");
-    }
+    if (!result.ok) throw new Error(result.error || "Password salah atau API error.");
 
     adminPassword = password;
     loggedIn = true;
-    sessionStorage.setItem("numoAdminPasswordV31", password);
+    sessionStorage.setItem("numoAdminPasswordPanelV40", password);
 
     showPanel();
-    showMessage(els.globalMsg, "Login berjaya. Loading data...", "success");
+    showMessage(els.globalMsg, uiText.loginSuccess, "success");
 
     await loadData();
-
   } catch (error) {
-    showMessage(els.loginMsg, "Login gagal: " + error.message, "error");
+    showMessage(els.loginMsg, uiText.loginFailed + error.message, "error");
   } finally {
-    setLoading(els.loginBtn, false, "Login Admin");
+    setLoading(els.loginBtn, false, uiText.login);
   }
 }
 
 function logout() {
   adminPassword = "";
   loggedIn = false;
-  sessionStorage.removeItem("numoAdminPasswordV31");
+  sessionStorage.removeItem("numoAdminPasswordPanelV40");
 
   els.panel.classList.remove("active");
   els.loginCard.style.display = "block";
   els.logoutBtn.classList.add("hidden");
-  els.password.value = "";
+  els.passwordInput.value = "";
 
-  showMessage(els.loginMsg, "Logout berjaya.", "info");
+  showMessage(els.loginMsg, uiText.logoutSuccess, "info");
 }
 
 function showPanel() {
@@ -304,8 +416,8 @@ function showPanel() {
 }
 
 async function loadData() {
-  showMessage(els.globalMsg, "Loading data dari Google Sheet...", "info");
-  setLoading(els.refreshBtn, true, "Loading");
+  showMessage(els.globalMsg, uiText.loadData, "info");
+  setLoading(els.refreshBtn, true, uiText.loading);
 
   try {
     const result = await jsonp({
@@ -313,9 +425,7 @@ async function loadData() {
       _: Date.now()
     });
 
-    if (!result.ok) {
-      throw new Error(result.error || "Gagal baca data.");
-    }
+    if (!result.ok) throw new Error(result.error || "Gagal baca data.");
 
     data = result.data || { stock: [], promos: [], meta: {} };
 
@@ -323,43 +433,37 @@ async function loadData() {
     renderStock();
     renderPromos();
 
-    showMessage(els.globalMsg, "Data berjaya sync.", "success");
-
+    showMessage(els.globalMsg, uiText.syncSuccess, "success");
   } catch (error) {
-    showMessage(els.globalMsg, "Gagal load data: " + error.message, "error");
+    showMessage(els.globalMsg, uiText.loadFailed + error.message, "error");
   } finally {
-    setLoading(els.refreshBtn, false, "Refresh");
+    setLoading(els.refreshBtn, false, uiText.refresh);
   }
 }
 
 function renderDashboard() {
-  const stockOffItems = getDashboardStockOffItems();
-  const promoItems = getDashboardPromoItems();
+  const stockOffItems = getStockOffItems();
+  const promoItems = getActivePromoItems();
 
-  els.stockOn.textContent = data.stock.filter(item => normalize(item.status) === "ON").length;
-  els.stockOff.textContent = stockOffItems.length;
-  els.promoOn.textContent = promoItems.length;
-  els.syncText.textContent = new Date().toLocaleString("ms-MY");
-
+  els.stockOnCount.textContent = data.stock.filter(item => normalize(item.status) === "ON").length;
+  els.stockOffCount.textContent = stockOffItems.length;
+  els.promoOnCount.textContent = promoItems.length;
   els.stockOffDetailCount.textContent = stockOffItems.length;
   els.promoActiveDetailCount.textContent = promoItems.length;
 
-  renderDashboardStockOffList(stockOffItems);
-  renderDashboardPromoList(promoItems);
+  renderStockOffList(stockOffItems);
+  renderPromoActiveList(promoItems);
 }
 
-function getDashboardStockOffItems() {
+function getStockOffItems() {
   const items = [];
 
   STOCK_GROUPS.forEach(group => {
     group.rows.forEach(row => {
       const stock = findStock(row.product, row.section);
+
       if (stock && normalize(stock.status) === "OFF") {
-        items.push({
-          ...row,
-          groupTitle: group.title,
-          stockText: stock.stockText || "Habis Stok"
-        });
+        items.push({ ...row, groupTitle: group.title, stockText: stock.stockText || uiText.stockOffTextDefault });
       }
     });
   });
@@ -367,25 +471,15 @@ function getDashboardStockOffItems() {
   return items;
 }
 
-function getDashboardPromoItems() {
+function getActivePromoItems() {
   const items = [];
 
-  BASE_GROUPS.forEach(group => {
+  PRODUCT_GROUPS.forEach(group => {
     group.plans.forEach(plan => {
       const promo = findPromo(group.product, group.section, plan.duration);
+
       if (promo && isPromoOn(promo)) {
-        items.push({
-          product: group.product,
-          section: group.section,
-          groupLabel: group.label,
-          duration: plan.duration,
-          price: plan.price,
-          promoPrice: promo.promoPrice || "",
-          badgePreset: promo.badgePreset || "Promo",
-          badgeCustomText: promo.badgeCustomText || "",
-          badgeColor: promo.badgeColor || "Gold",
-          note: promo.note || ""
-        });
+        items.push({ ...group, ...plan, promo });
       }
     });
   });
@@ -393,116 +487,90 @@ function getDashboardPromoItems() {
   return items;
 }
 
-function renderDashboardStockOffList(items) {
+function renderStockOffList(items) {
   if (!items.length) {
-    els.stockOffList.innerHTML = `<div class="empty">Tiada produk/device yang OFF.</div>`;
+    els.stockOffList.innerHTML = `<div class="empty">${safeText(uiText.noStockOff)}</div>`;
     return;
   }
 
   els.stockOffList.innerHTML = items.map(item => `
-    <button class="dash-list-item dash-stock-jump" type="button"
-      data-product="${safeAttr(item.product)}"
-      data-section="${safeAttr(item.section)}">
-      <span class="dash-list-main">
-        <strong>${safe(item.label)}</strong>
-        <span>${safe(item.groupTitle)} • Section: ${safe(item.section)} • ${safe(item.stockText)}</span>
-      </span>
-      <span class="dash-arrow">Edit ›</span>
+    <button class="jump-item" type="button" data-product="${safeAttr(item.product)}" data-section="${safeAttr(item.section)}">
+      <div>
+        <strong>${safeText(item.label)}</strong>
+        <span>${safeText(item.groupTitle)} • ${safeText(item.section)} • ${safeText(item.stockText)}</span>
+      </div>
+      <strong>${safeText(uiText.editLabel)} ›</strong>
     </button>
   `).join("");
 
-  els.stockOffList.querySelectorAll(".dash-stock-jump").forEach(button => {
-    button.addEventListener("click", () => {
-      jumpToStock(button.dataset.product, button.dataset.section);
-    });
+  els.stockOffList.querySelectorAll(".jump-item").forEach(button => {
+    button.addEventListener("click", () => jumpToStock(button.dataset.product, button.dataset.section));
   });
 }
 
-function renderDashboardPromoList(items) {
+function renderPromoActiveList(items) {
   if (!items.length) {
-    els.promoActiveList.innerHTML = `<div class="empty">Tiada promo aktif.</div>`;
+    els.promoActiveList.innerHTML = `<div class="empty">${safeText(uiText.noPromoActive)}</div>`;
     return;
   }
 
   els.promoActiveList.innerHTML = items.map(item => {
-    const badgeText = item.badgePreset === "Custom" ? (item.badgeCustomText || "Promo") : item.badgePreset;
+    const badgeText = getBadgeText(item.promo);
+    const displayName = item.label ? `${item.label} • ${item.label || item.duration}` : item.duration;
 
     return `
-      <button class="dash-list-item dash-promo-jump" type="button"
+      <button class="jump-item" type="button"
         data-product="${safeAttr(item.product)}"
         data-section="${safeAttr(item.section)}"
         data-duration="${safeAttr(item.duration)}">
-        <span class="dash-list-main">
-          <strong>${safe(item.groupLabel)} • ${safe(item.duration)}</strong>
-          <span>${safe(item.price)} → ${safe(item.promoPrice || "-")} • ${safe(badgeText)}</span>
-        </span>
-        <span class="dash-arrow">Edit ›</span>
+        <div>
+          <strong>${safeText(item.product)} • ${safeText(item.label || item.duration)}</strong>
+          <span>${safeText(item.price)} → ${safeText(item.promo.promoPrice || "-")} • ${safeText(badgeText)}</span>
+        </div>
+        <strong>${safeText(uiText.editLabel)} ›</strong>
       </button>
     `;
   }).join("");
 
-  els.promoActiveList.querySelectorAll(".dash-promo-jump").forEach(button => {
-    button.addEventListener("click", () => {
-      jumpToPromo(button.dataset.product, button.dataset.section, button.dataset.duration);
-    });
+  els.promoActiveList.querySelectorAll(".jump-item").forEach(button => {
+    button.addEventListener("click", () => jumpToPromo(button.dataset.product, button.dataset.section, button.dataset.duration));
   });
 }
 
 function renderStock() {
-  const missingSooka = ["TV", "PHONE", "TABLET"].filter(section => !findStock("SOOKA PREMIUM", section));
-  els.sookaSetupWarning.classList.toggle("hidden", missingSooka.length === 0);
-
-  els.stockLayout.innerHTML = STOCK_GROUPS.map(group => {
-    return `
-      <article class="stock-group ${group.className || ""}">
-        <div class="group-head">
-          <div class="group-title">
-            <div class="group-icon">${group.icon}</div>
-            <div>
-              <strong>${safe(group.title)}</strong>
-              <span>${safe(group.subtitle)}</span>
-            </div>
-          </div>
-          <span class="pill blue">${group.rows.length} control</span>
+  els.stockGrid.innerHTML = STOCK_GROUPS.map(group => `
+    <article class="stock-group ${group.full ? "full" : ""}">
+      <div class="group-head">
+        <div>
+          <strong>${safeText(group.title)}</strong>
+          <span>${safeText(group.subtitle)}</span>
         </div>
+        <span class="status-pill gray">${group.rows.length} control</span>
+      </div>
 
-        <div class="stock-list">
-          ${group.rows.map(row => renderStockRow(row)).join("")}
-        </div>
-      </article>
-    `;
-  }).join("");
+      <div>
+        ${group.rows.map(row => renderStockRow(row)).join("")}
+      </div>
+    </article>
+  `).join("");
 
-  els.stockLayout.querySelectorAll(".stock-row").forEach(card => {
-    const product = card.dataset.product;
-    const section = card.dataset.section;
-
-    const onBtn = card.querySelector(".toggle-on");
-    const offBtn = card.querySelector(".toggle-off");
-    const saveBtn = card.querySelector(".stock-save");
-    const stockTextInput = card.querySelector(".stock-text");
+  els.stockGrid.querySelectorAll(".stock-row").forEach(row => {
+    const onBtn = row.querySelector(".toggle-on");
+    const offBtn = row.querySelector(".toggle-off");
+    const saveBtn = row.querySelector(".stock-save");
+    const stockText = row.querySelector(".stock-text");
 
     const setStatus = status => {
-      card.dataset.status = status;
-      updateToggleVisual(card);
+      row.dataset.status = status;
+      updateStockVisual(row);
     };
 
-    onBtn.addEventListener("click", () => setStatus("ON"));
-    offBtn.addEventListener("click", () => setStatus("OFF"));
+    onBtn?.addEventListener("click", () => setStatus("ON"));
+    offBtn?.addEventListener("click", () => setStatus("OFF"));
 
-    saveBtn.addEventListener("click", () => {
-      saveStock({
-        card,
-        product,
-        section,
-        status: card.dataset.status,
-        stockText: stockTextInput.value.trim() || "Habis Stok"
-      });
-    });
-  });
+    saveBtn?.addEventListener("click", () => saveStock(row, stockText.value.trim() || uiText.stockOffTextDefault));
 
-  requestAnimationFrame(() => {
-    document.querySelectorAll(".stock-row").forEach(updateToggleVisual);
+    updateStockVisual(row);
   });
 }
 
@@ -510,110 +578,100 @@ function renderStockRow(row) {
   const stock = findStock(row.product, row.section);
   const exists = Boolean(stock);
   const status = exists ? (normalize(stock.status) === "OFF" ? "OFF" : "ON") : "MISSING";
-  const stockText = exists ? (stock.stockText || "Habis Stok") : "Habis Stok";
-  const rowId = stockDomId(row.product, row.section);
-
-  const pillClass = status === "ON" ? "on" : status === "OFF" ? "off" : "gray";
-  const pillText = status === "MISSING" ? "SETUP NEEDED" : status === "ON" ? "ON" : "HABIS STOK";
-  const disabled = exists ? "" : "disabled";
+  const stockText = exists ? (stock.stockText || uiText.stockOffTextDefault) : uiText.stockOffTextDefault;
 
   return `
-    <div id="${rowId}" class="stock-row" data-product="${safeAttr(row.product)}" data-section="${safeAttr(row.section)}" data-status="${status}">
-      <div class="stock-main">
+    <div id="${stockDomId(row.product, row.section)}"
+      class="stock-row"
+      data-product="${safeAttr(row.product)}"
+      data-section="${safeAttr(row.section)}"
+      data-status="${safeAttr(status)}">
+
+      <div class="stock-top">
         <div>
-          <div class="stock-name">${safe(row.label)}</div>
-          <div class="stock-sub">${safe(row.note)} • Section: ${safe(row.section)}</div>
+          <div class="stock-name">${safeText(row.label)}</div>
+          <div class="stock-note">${safeText(row.note)} • Section: ${safeText(row.section)}</div>
         </div>
-        <span class="pill ${pillClass}">${pillText}</span>
+        <span class="status-pill"></span>
       </div>
 
-      <div class="stock-actions">
+      <div class="stock-controls">
         <div>
-          <label class="field-label">Text bila OFF</label>
-          <input class="input stock-text" type="text" value="${safeAttr(stockText)}" ${disabled}>
+          <label class="field-label">${safeText(uiText.textWhenOff)}</label>
+          <input class="input stock-text" type="text" value="${safeAttr(stockText)}" ${exists ? "" : "disabled"}>
         </div>
 
         <div>
-          <label class="field-label">Status</label>
-          <div class="toggle-wrap">
-            <button class="toggle-btn toggle-on" type="button" ${disabled}>ON</button>
-            <button class="toggle-btn toggle-off" type="button" ${disabled}>OFF</button>
+          <label class="field-label">${safeText(uiText.statusLabel)}</label>
+          <div class="toggle-pair">
+            <button class="toggle-btn toggle-on" type="button" ${exists ? "" : "disabled"}>${safeText(uiText.onLabel)}</button>
+            <button class="toggle-btn toggle-off" type="button" ${exists ? "" : "disabled"}>${safeText(uiText.offLabel)}</button>
           </div>
         </div>
 
-        <button class="btn stock-save" type="button" ${disabled}>Save</button>
+        <button class="btn stock-save" type="button" ${exists ? "" : "disabled"}>${safeText(uiText.save)}</button>
       </div>
     </div>
   `;
 }
 
-function updateToggleVisual(card) {
-  if (!card || !card.dataset) return;
+function updateStockVisual(row) {
+  const status = row.dataset.status;
+  const pill = row.querySelector(".status-pill");
+  const onBtn = row.querySelector(".toggle-on");
+  const offBtn = row.querySelector(".toggle-off");
 
-  const status = card.dataset.status;
-  const onBtn = card.querySelector(".toggle-on");
-  const offBtn = card.querySelector(".toggle-off");
-  const pill = card.querySelector(".pill");
+  onBtn?.classList.toggle("active-on", status === "ON");
+  offBtn?.classList.toggle("active-off", status === "OFF");
 
-  if (!onBtn || !offBtn || !pill) return;
-
-  onBtn.classList.toggle("active-on", status === "ON");
-  offBtn.classList.toggle("active-off", status === "OFF");
+  if (!pill) return;
 
   if (status === "MISSING") {
-    pill.className = "pill gray";
-    pill.textContent = "SETUP NEEDED";
+    pill.className = "status-pill gray";
+    pill.textContent = uiText.setupNeeded;
     return;
   }
 
-  pill.className = "pill " + (status === "ON" ? "on" : "off");
-  pill.textContent = status === "ON" ? "ON" : "HABIS STOK";
+  pill.className = "status-pill " + (status === "OFF" ? "off" : "");
+  pill.textContent = status === "OFF" ? uiText.offLabel : uiText.onLabel;
 }
 
-async function saveStock({ card, product, section, status, stockText }) {
-  const button = card.querySelector(".stock-save");
-
-  setLoading(button, true, "Saving...");
+async function saveStock(row, stockText) {
+  const button = row.querySelector(".stock-save");
+  setLoading(button, true, uiText.saving);
 
   try {
     const result = await jsonp({
       mode: "saveStock",
       password: adminPassword,
-      product,
-      section,
-      status,
+      product: row.dataset.product,
+      section: row.dataset.section,
+      status: row.dataset.status,
       stockText
     });
 
-    if (!result.ok) {
-      throw new Error(result.error || "Gagal save stock.");
-    }
+    if (!result.ok) throw new Error(result.error || "Gagal save stock.");
 
-    showMessage(els.globalMsg, `Stock ${product} / ${section} berjaya disimpan.`, "success");
+    showMessage(els.globalMsg, uiText.saveStockSuccess, "success");
     await loadData();
-
   } catch (error) {
-    showMessage(els.globalMsg, "Gagal save stock: " + error.message, "error");
+    showMessage(els.globalMsg, uiText.saveStockFailed + error.message, "error");
   } finally {
-    setLoading(button, false, "Save");
+    setLoading(button, false, uiText.save);
   }
 }
 
 function renderPromos() {
-  const query = normalize(els.search.value);
+  const query = normalize(els.promoSearch.value);
   const filter = els.promoFilter.value;
 
-  const groups = BASE_GROUPS.map(group => {
+  const groups = PRODUCT_GROUPS.map(group => {
     const plans = group.plans.map(plan => {
       const promo = findPromo(group.product, group.section, plan.duration) || {};
 
       return {
-        product: group.product,
-        section: group.section,
-        groupLabel: group.label,
-        icon: group.icon,
-        duration: plan.duration,
-        price: plan.price,
+        ...group,
+        ...plan,
         promoActive: promo.promoActive || "NO",
         promoPrice: promo.promoPrice || "",
         badgePreset: promo.badgePreset || "Promo",
@@ -622,12 +680,11 @@ function renderPromos() {
         note: promo.note || ""
       };
     }).filter(item => {
-      const haystack = normalize(`${item.product} ${item.section} ${item.duration} ${item.price} ${item.promoPrice}`);
+      const haystack = normalize(`${item.product} ${item.section} ${item.label || item.duration} ${item.price} ${item.promoPrice}`);
 
       if (query && !haystack.includes(query)) return false;
       if (filter === "ON" && !isPromoOn(item)) return false;
       if (filter === "OFF" && isPromoOn(item)) return false;
-
       return true;
     });
 
@@ -635,22 +692,21 @@ function renderPromos() {
   }).filter(group => group.plans.length);
 
   if (!groups.length) {
-    els.promoGroups.innerHTML = `<div class="empty">Tiada plan dijumpai.</div>`;
+    els.promoGroups.innerHTML = `<div class="empty">${safeText(uiText.noPlanFound)}</div>`;
     return;
   }
 
   els.promoGroups.innerHTML = groups.map((group, index) => {
     const activeCount = group.plans.filter(isPromoOn).length;
-    const openAttr = index === 0 ? "open" : "";
 
     return `
-      <details id="${promoGroupDomId(group.product, group.section)}" class="promo-group" ${openAttr}>
+      <details id="${promoGroupDomId(group.product, group.section)}" class="promo-group" ${index === 0 ? "open" : ""}>
         <summary>
-          <div class="summary-title">
-            <strong>${group.icon} ${safe(group.label)}</strong>
-            <span>${group.plans.length} plan dipaparkan • ${activeCount} promo aktif</span>
+          <div>
+            <strong>${safeText(group.icon + " " + group.label)}</strong>
+            <span>${group.plans.length} plan • ${activeCount} promo ON</span>
           </div>
-          <span class="chevron">›</span>
+          <strong>›</strong>
         </summary>
 
         <div class="promo-list">
@@ -660,37 +716,122 @@ function renderPromos() {
     `;
   }).join("");
 
-  els.promoGroups.querySelectorAll(".promo-card").forEach(card => {
-    const item = JSON.parse(card.dataset.item);
+  bindPromoCards();
+}
 
+function renderPromoCard(item) {
+  const active = isPromoOn(item) ? "YES" : "NO";
+  const displayDuration = item.label || item.duration;
+  const badgeText = item.badgePreset === "Custom" ? (item.badgeCustomText || "Promo") : item.badgePreset;
+  const previewPrice = item.promoPrice || item.price;
+
+  return `
+    <article id="${promoDomId(item.product, item.section, item.duration)}"
+      class="promo-card"
+      data-product="${safeAttr(item.product)}"
+      data-section="${safeAttr(item.section)}"
+      data-duration="${safeAttr(item.duration)}"
+      data-group-label="${safeAttr(item.label)}"
+      data-price="${safeAttr(item.price)}">
+
+      <div class="promo-card-top">
+        <div>
+          <div class="promo-title">${safeText(displayDuration)}</div>
+          <div class="promo-sub">${safeText(item.section === "ALL" ? uiText.normalPrice : item.section)} • ${safeText(uiText.normalPrice)} ${safeText(item.price)}</div>
+        </div>
+        <span class="status-pill ${active === "YES" ? "" : "gray"}">${safeText(active === "YES" ? uiText.promoOnStatus : uiText.promoOffStatus)}</span>
+      </div>
+
+      <div class="promo-body">
+        <div class="preview">
+          <span>${safeText(uiText.preview)}</span>
+          <span class="preview-old">${safeText(item.price)}</span>
+          <span class="preview-price">${safeText(previewPrice)}</span>
+          <span class="badge-preview ${badgeClass(item.badgeColor)}">${safeText(badgeText)}</span>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label">${safeText(uiText.promoActive)}</label>
+            <select class="select promo-active">
+              <option value="NO" ${active === "NO" ? "selected" : ""}>OFF</option>
+              <option value="YES" ${active === "YES" ? "selected" : ""}>ON</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label">${safeText(uiText.promoPrice)}</label>
+            <input class="input promo-price" type="text" value="${safeAttr(item.promoPrice)}" placeholder="Contoh: RM20">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label">${safeText(uiText.badgePreset)}</label>
+            <select class="select badge-preset">
+              ${BADGE_PRESETS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgePreset ? "selected" : ""}>${safeText(option)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label">${safeText(uiText.badgeColor)}</label>
+            <select class="select badge-color">
+              ${BADGE_COLORS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgeColor ? "selected" : ""}>${safeText(option)}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="custom-badge-wrap ${item.badgePreset === "Custom" ? "" : "hidden"}">
+          <label class="field-label">${safeText(uiText.customBadgeText)}</label>
+          <input class="input badge-custom" type="text" value="${safeAttr(item.badgeCustomText)}" placeholder="Contoh: Promo Weekend">
+        </div>
+
+        <div>
+          <label class="field-label">${safeText(uiText.promoNote)}</label>
+          <textarea class="textarea promo-note" placeholder="Nota promo">${safeText(item.note)}</textarea>
+        </div>
+
+        <div class="quick-actions">
+          <button class="btn green promo-on" type="button">${safeText(uiText.promoOnButton)}</button>
+          <button class="btn soft promo-off" type="button">${safeText(uiText.promoOffButton)}</button>
+          <button class="btn red promo-clear" type="button">${safeText(uiText.clearButton)}</button>
+        </div>
+
+        <button class="btn promo-save" type="button">${safeText(uiText.savePromo)}</button>
+      </div>
+    </article>
+  `;
+}
+
+function bindPromoCards() {
+  els.promoGroups.querySelectorAll(".promo-card").forEach(card => {
     const active = card.querySelector(".promo-active");
     const price = card.querySelector(".promo-price");
     const preset = card.querySelector(".badge-preset");
-    const customWrap = card.querySelector(".custom-wrap");
-    const custom = card.querySelector(".badge-custom");
     const color = card.querySelector(".badge-color");
+    const customWrap = card.querySelector(".custom-badge-wrap");
+    const custom = card.querySelector(".badge-custom");
     const note = card.querySelector(".promo-note");
-    const badgePreview = card.querySelector(".badge-preview");
-    const pricePreview = card.querySelector(".price-preview");
+    const previewPrice = card.querySelector(".preview-price");
+    const previewBadge = card.querySelector(".badge-preview");
 
     const updatePreview = () => {
       const badgeText = preset.value === "Custom" ? (custom.value.trim() || "Promo") : preset.value;
+
       customWrap.classList.toggle("hidden", preset.value !== "Custom");
-      badgePreview.textContent = badgeText;
-      badgePreview.className = "badge badge-preview " + badgeClass(color.value);
-      pricePreview.textContent = price.value.trim() || item.price;
+      previewPrice.textContent = price.value.trim() || card.dataset.price;
+      previewBadge.textContent = badgeText;
+      previewBadge.className = "badge-preview " + badgeClass(color.value);
     };
 
-    [active, price, preset, custom, color, note].forEach(element => {
-      element.addEventListener("input", updatePreview);
-      element.addEventListener("change", updatePreview);
+    [active, price, preset, color, custom, note].forEach(input => {
+      input.addEventListener("input", updatePreview);
+      input.addEventListener("change", updatePreview);
     });
 
     card.querySelector(".promo-on").addEventListener("click", () => {
       active.value = "YES";
-      if (!price.value.trim()) {
-        price.value = item.price;
-      }
+      if (!price.value.trim()) price.value = card.dataset.price;
       updatePreview();
     });
 
@@ -703,143 +844,57 @@ function renderPromos() {
       active.value = "NO";
       price.value = "";
       preset.value = "Promo";
-      custom.value = "";
       color.value = "Gold";
+      custom.value = "";
       note.value = "";
       updatePreview();
     });
 
-    card.querySelector(".promo-save").addEventListener("click", () => savePromo(card, item));
+    card.querySelector(".promo-save").addEventListener("click", () => savePromo(card));
 
     updatePreview();
   });
 }
 
-function renderPromoCard(item) {
-  const active = isPromoOn(item) ? "YES" : "NO";
-  const badgeText = item.badgePreset === "Custom" ? (item.badgeCustomText || "Promo") : (item.badgePreset || "Promo");
-  const sectionText = item.section === "ALL" ? "Semua plan" : item.section;
-  const cardId = promoDomId(item.product, item.section, item.duration);
-
-  return `
-    <article id="${cardId}" class="promo-card" data-item="${safeAttr(JSON.stringify(item))}">
-      <div class="promo-top">
-        <div>
-          <div class="promo-title">${safe(item.duration)}</div>
-          <div class="promo-sub">${safe(sectionText)} • Harga asal ${safe(item.price)}</div>
-        </div>
-        <span class="pill ${active === "YES" ? "promo" : "gray"}">${active === "YES" ? "PROMO ON" : "PROMO OFF"}</span>
-      </div>
-
-      <div class="promo-form">
-        <div class="preview">
-          <span>Preview:</span>
-          <span class="old-price">${safe(item.price)}</span>
-          <span class="new-price price-preview">${safe(item.promoPrice || item.price)}</span>
-          <span class="badge badge-preview ${badgeClass(item.badgeColor)}">${safe(badgeText)}</span>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label class="field-label">Promo Active</label>
-            <select class="select promo-active">
-              <option value="NO" ${active === "NO" ? "selected" : ""}>OFF</option>
-              <option value="YES" ${active === "YES" ? "selected" : ""}>ON</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="field-label">Promo Price</label>
-            <input class="input promo-price" type="text" placeholder="Contoh: RM20" value="${safeAttr(item.promoPrice || "")}">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label class="field-label">Badge Preset</label>
-            <select class="select badge-preset">
-              ${BADGE_PRESETS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgePreset ? "selected" : ""}>${safe(option)}</option>`).join("")}
-            </select>
-          </div>
-
-          <div>
-            <label class="field-label">Badge Color</label>
-            <select class="select badge-color">
-              ${BADGE_COLORS.map(option => `<option value="${safeAttr(option)}" ${option === item.badgeColor ? "selected" : ""}>${safe(option)}</option>`).join("")}
-            </select>
-          </div>
-        </div>
-
-        <div class="custom-wrap ${item.badgePreset === "Custom" ? "" : "hidden"}">
-          <label class="field-label">Custom Badge Text</label>
-          <input class="input badge-custom" type="text" placeholder="Contoh: Promo Weekend" value="${safeAttr(item.badgeCustomText || "")}">
-        </div>
-
-        <div>
-          <label class="field-label">Promo Note</label>
-          <textarea class="textarea promo-note" placeholder="Contoh: Promo bulan ini sementara slot masih ada">${safe(item.note || "")}</textarea>
-        </div>
-
-        <div class="quick-actions">
-          <button class="btn green promo-on" type="button">Promo ON</button>
-          <button class="btn soft promo-off" type="button">Promo OFF</button>
-          <button class="btn red promo-clear" type="button">Clear</button>
-        </div>
-
-        <button class="btn promo-save" type="button">Save Promo</button>
-      </div>
-    </article>
-  `;
-}
-
-async function savePromo(card, item) {
+async function savePromo(card) {
   const button = card.querySelector(".promo-save");
 
-  const promoActive = card.querySelector(".promo-active").value;
-  const promoPrice = card.querySelector(".promo-price").value.trim();
-  const badgePreset = card.querySelector(".badge-preset").value;
-  const badgeCustomText = card.querySelector(".badge-custom").value.trim();
-  const badgeColor = card.querySelector(".badge-color").value;
-  const note = card.querySelector(".promo-note").value.trim();
+  const payload = {
+    mode: "savePromo",
+    password: adminPassword,
+    product: card.dataset.product,
+    section: card.dataset.section,
+    duration: card.dataset.duration,
+    promoActive: card.querySelector(".promo-active").value,
+    promoPrice: card.querySelector(".promo-price").value.trim(),
+    badgePreset: card.querySelector(".badge-preset").value,
+    badgeCustomText: card.querySelector(".badge-custom").value.trim(),
+    badgeColor: card.querySelector(".badge-color").value,
+    note: card.querySelector(".promo-note").value.trim()
+  };
 
-  if (promoActive === "YES" && !promoPrice) {
-    showMessage(els.globalMsg, "Isi Promo Price dulu kalau Promo Active = ON.", "error");
+  if (payload.promoActive === "YES" && !payload.promoPrice) {
+    showMessage(els.globalMsg, uiText.promoPriceRequired, "error");
     return;
   }
 
-  if (badgePreset === "Custom" && !badgeCustomText) {
-    showMessage(els.globalMsg, "Isi Custom Badge Text dulu kalau pilih Custom.", "error");
+  if (payload.badgePreset === "Custom" && !payload.badgeCustomText) {
+    showMessage(els.globalMsg, uiText.customBadgeRequired, "error");
     return;
   }
 
-  setLoading(button, true, "Saving...");
+  setLoading(button, true, uiText.saving);
 
   try {
-    const result = await jsonp({
-      mode: "savePromo",
-      password: adminPassword,
-      product: item.product,
-      section: item.section || "ALL",
-      duration: item.duration,
-      promoActive,
-      promoPrice,
-      badgePreset,
-      badgeCustomText,
-      badgeColor,
-      note
-    });
+    const result = await jsonp(payload);
+    if (!result.ok) throw new Error(result.error || "Gagal save promo.");
 
-    if (!result.ok) {
-      throw new Error(result.error || "Gagal save promo.");
-    }
-
-    showMessage(els.globalMsg, `Promo ${item.groupLabel} ${item.duration} berjaya disimpan.`, "success");
+    showMessage(els.globalMsg, uiText.savePromoSuccess, "success");
     await loadData();
-
   } catch (error) {
-    showMessage(els.globalMsg, "Gagal save promo: " + error.message, "error");
+    showMessage(els.globalMsg, uiText.savePromoFailed + error.message, "error");
   } finally {
-    setLoading(button, false, "Save Promo");
+    setLoading(button, false, uiText.savePromo);
   }
 }
 
@@ -855,7 +910,7 @@ function jumpToStock(product, section) {
 function jumpToPromo(product, section, duration) {
   switchTab("promo");
 
-  els.search.value = "";
+  els.promoSearch.value = "";
   els.promoFilter.value = "ALL";
   renderPromos();
 
@@ -865,7 +920,7 @@ function jumpToPromo(product, section, duration) {
 
     const target = document.getElementById(promoDomId(product, section, duration));
     highlightAndScroll(target);
-  }, 140);
+  }, 150);
 }
 
 function highlightAndScroll(target) {
@@ -874,9 +929,12 @@ function highlightAndScroll(target) {
   target.scrollIntoView({ behavior: "smooth", block: "center" });
   target.classList.add("highlight");
 
-  setTimeout(() => {
-    target.classList.remove("highlight");
-  }, 2600);
+  setTimeout(() => target.classList.remove("highlight"), 2500);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.tab === tabId));
+  document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === tabId));
 }
 
 function findStock(product, section) {
@@ -898,19 +956,100 @@ function isPromoOn(item) {
   return normalize(item.promoActive) === "YES" || normalize(item.promoActive) === "ON";
 }
 
+function getBadgeText(promo) {
+  if (!promo) return "Promo";
+  const preset = promo.badgePreset || "Promo";
+  return preset === "Custom" ? (promo.badgeCustomText || "Promo") : (promo.badgeText || preset || "Promo");
+}
+
+function badgeClass(color) {
+  const value = normalize(color);
+
+  if (value === "GREEN") return "green";
+  if (value === "RED") return "red";
+  if (value === "BLUE") return "blue";
+  if (value === "PURPLE" || value === "PINK") return "purple";
+  if (value === "DARK" || value === "BLACK") return "dark";
+
+  return "";
+}
+
+function stockDomId(product, section) {
+  return "stock-" + slug(`${product}-${section}`);
+}
+
+function promoGroupDomId(product, section) {
+  return "promo-group-" + slug(`${product}-${section}`);
+}
+
+function promoDomId(product, section, duration) {
+  return "promo-" + slug(`${product}-${section}-${duration}`);
+}
+
+function slug(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\+/g, "plus")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function setLoading(button, loading, text) {
+  if (!button) return;
+
+  if (loading) {
+    button.dataset.oldText = button.textContent;
+    button.textContent = text || uiText.loading;
+    button.disabled = true;
+  } else {
+    button.textContent = text || button.dataset.oldText || button.textContent;
+    button.disabled = false;
+  }
+}
+
+function showMessage(element, message, type = "info") {
+  if (!element) return;
+
+  element.textContent = message;
+  element.className = "message show " + type;
+
+  if (type === "success") {
+    clearTimeout(element._timer);
+    element._timer = setTimeout(() => element.classList.remove("show"), 4500);
+  }
+}
+
+function setText(id, text) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = text || "";
+}
+
+function safeText(value = "") {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeAttr(value = "") {
+  return safeText(value);
+}
+
+function normalize(value = "") {
+  return String(value || "").trim().toUpperCase();
+}
+
 function jsonp(params) {
   return new Promise((resolve, reject) => {
-    const callbackName = "numoCb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
-    const query = new URLSearchParams({
-      ...params,
-      callback: callbackName
-    });
-
+    const callbackName = "numoAdminCb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    const query = new URLSearchParams({ ...params, callback: callbackName });
     const script = document.createElement("script");
 
     const timer = setTimeout(() => {
       cleanup();
-      reject(new Error("Request timeout. Check Apps Script deployment."));
+      reject(new Error("Request timeout"));
     }, 20000);
 
     window[callbackName] = result => {
@@ -929,96 +1068,10 @@ function jsonp(params) {
 
     script.onerror = () => {
       cleanup();
-      reject(new Error("Network/API error. Check Web App URL."));
+      reject(new Error("Network/API error"));
     };
 
     script.src = API_URL + "?" + query.toString();
     document.body.appendChild(script);
   });
-}
-
-function switchTab(tab) {
-  document.querySelectorAll(".tab").forEach(button => {
-    button.classList.toggle("active", button.dataset.tab === tab);
-  });
-
-  document.querySelectorAll(".section").forEach(section => {
-    section.classList.toggle("active", section.id === tab);
-  });
-}
-
-function badgeClass(color) {
-  const value = normalize(color);
-
-  if (value === "GREEN") return "badge-green";
-  if (value === "RED") return "badge-red";
-  if (value === "BLUE") return "badge-blue";
-  if (value === "PURPLE" || value === "PINK") return "badge-purple";
-  if (value === "DARK" || value === "BLACK") return "badge-dark";
-
-  return "badge-gold";
-}
-
-function setLoading(button, loading, text) {
-  if (!button) return;
-
-  if (loading) {
-    button.dataset.oldText = button.textContent;
-    button.textContent = text || "Loading...";
-    button.disabled = true;
-  } else {
-    button.textContent = button.dataset.oldText || button.textContent;
-    button.disabled = false;
-  }
-}
-
-function showMessage(element, message, type = "info") {
-  if (!element) return;
-
-  element.textContent = message;
-  element.className = "message show " + type;
-
-  if (type === "success") {
-    clearTimeout(element._timer);
-    element._timer = setTimeout(() => {
-      element.classList.remove("show");
-    }, 4500);
-  }
-}
-
-function stockDomId(product, section) {
-  return "stock-" + slug(`${product}-${section}`);
-}
-
-function promoGroupDomId(product, section) {
-  return "promo-group-" + slug(`${product}-${section}`);
-}
-
-function promoDomId(product, section, duration) {
-  return "promo-" + slug(`${product}-${section}-${duration}`);
-}
-
-function slug(value = "") {
-  return String(value)
-    .toLowerCase()
-    .replace(/\+/g, "plus")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function normalize(value = "") {
-  return String(value || "").trim().toUpperCase();
-}
-
-function safe(value = "") {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function safeAttr(value = "") {
-  return safe(value);
 }
