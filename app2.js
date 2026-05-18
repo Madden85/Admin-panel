@@ -11,14 +11,14 @@ window.NUMO_ADMIN_TEXT = {
   // Top buttons
   refresh: "Refresh",
   logout: "Logout",
-  login: "Login",
+  login: "LOG IN",
   checking: "Checking...",
   loading: "Loading...",
   saving: "Saving...",
 
   // Login
   passwordLabel: "Admin Password",
-  passwordPlaceholder: "Masukkan password admin",
+  passwordPlaceholder: "HINT: Honda HRV",
 
   // Tabs
   tabDashboard: "Dashboard",
