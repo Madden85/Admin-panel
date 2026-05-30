@@ -36,6 +36,9 @@ let uiText = {
   tabDashboard: "Dashboard",
   tabStock: "Stock",
   tabPromo: "Promo",
+  tabHotSelling: "Hot Selling",
+  tabReseller: "Reseller",
+  tabLead: "Lead",
   stockOnLabel: "Stock ON",
   stockOffLabel: "Stock OFF",
   promoOnLabel: "Promo Aktif",
@@ -80,7 +83,34 @@ let uiText = {
   savePromoSuccess: "Promo berjaya disimpan.",
   savePromoFailed: "Gagal save promo: ",
   promoPriceRequired: "Isi Promo Price dulu kalau Promo Active = ON.",
-  customBadgeRequired: "Isi Custom Badge Text dulu kalau pilih Custom."
+  customBadgeRequired: "Isi Custom Badge Text dulu kalau pilih Custom.",
+  hotSellingVisibleLabel: "Hot Selling Visible",
+  resellerActiveLabel: "Reseller Aktif",
+  totalLeadLabel: "Total Lead",
+  noHotSelling: "Tiada item Hot Selling dijumpai.",
+  hotSellingStatus: "Status Hot Selling",
+  positionLabel: "Position",
+  hotBadgeLabel: "Badge Hot Selling",
+  hiddenLabel: "Disorok",
+  visibleLabel: "VISIBLE",
+  saveHotSelling: "Save Hot Selling",
+  saveHotSellingSuccess: "Hot Selling berjaya disimpan.",
+  saveHotSellingFailed: "Gagal save Hot Selling: ",
+  resellerSearchPlaceholder: "Cari nama atau Telegram reseller",
+  noReseller: "Tiada reseller dijumpai.",
+  telegramUsernameLabel: "Telegram Username",
+  resellerNameLabel: "Nama Reseller",
+  leadCountLabel: "Lead Count",
+  lastAssignedLabel: "Last Assigned",
+  saveReseller: "Save Reseller",
+  saveResellerSuccess: "Reseller berjaya disimpan.",
+  saveResellerFailed: "Gagal save reseller: ",
+  leadTotalLabel: "Jumlah Lead",
+  leadAssignedLabel: "Assigned",
+  leadReassignedLabel: "Reassigned",
+  leadDistributionTitle: "Agihan Lead Mengikut Reseller",
+  noLead: "Belum ada lead direkodkan.",
+  hotSellingRuleText: "Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo."
 };
 
 let editableContent = {
@@ -98,7 +128,13 @@ let editableContent = {
   stockTitle: "Stock Control",
   stockText: "Set ON/OFF untuk produk, YouTube type dan Sooka device.",
   promoTitle: "Promo Control",
-  promoText: "Buka produk yang nak edit sahaja supaya panel kekal kemas."
+  promoText: "Buka produk yang nak edit sahaja supaya panel kekal kemas.",
+  hotSellingTitle: "Hot Selling Control",
+  hotSellingText: "Pilih highlight untuk website. Harga akan ikut promo yang aktif dalam Promo Control.",
+  resellerTitle: "Reseller Control",
+  resellerText: "ON/OFF reseller dan semak jumlah lead yang telah diterima.",
+  leadTitle: "Lead Summary",
+  leadText: "Ringkasan agihan lead customer kepada reseller."
 };
 
 const PRODUCT_GROUPS = [
@@ -306,7 +342,15 @@ const STOCK_DISPLAY_GROUPS = [
   }
 ];
 
-let data = { stock: [], promos: [], meta: {} };
+let data = {
+  stock: [],
+  promos: [],
+  visibleHotSelling: [],
+  hotSellingControl: [],
+  resellers: [],
+  leadSummary: {},
+  meta: {}
+};
 let adminPassword = sessionStorage.getItem("numoAdminPasswordPanelV40") || "";
 let loggedIn = Boolean(adminPassword);
 
@@ -333,7 +377,9 @@ function cacheElements() {
   [
     "refreshBtn","logoutBtn","loginCard","panel","passwordInput","loginBtn","loginMsg","globalMsg",
     "stockOnCount","stockOffCount","promoOnCount","stockOffDetailCount","promoActiveDetailCount",
-    "stockOffList","promoActiveList","stockGrid","promoSearch","promoFilter","promoGroups"
+    "stockOffList","promoActiveList","stockGrid","promoSearch","promoFilter","promoGroups",
+    "hotSellingVisibleCount","resellerActiveCount","totalLeadCount","hotSellingList",
+    "resellerSearch","resellerList","leadTotalCount","leadAssignedCount","leadReassignedCount","leadByReseller"
   ].forEach(id => els[id] = document.getElementById(id));
 }
 
@@ -381,12 +427,24 @@ function applyButtonText() {
   setText("tabDashboard", uiText.tabDashboard);
   setText("tabStock", uiText.tabStock);
   setText("tabPromo", uiText.tabPromo);
+  setText("tabHotSelling", uiText.tabHotSelling);
+  setText("tabReseller", uiText.tabReseller);
+  setText("tabLead", uiText.tabLead);
   setText("stockOnLabel", uiText.stockOnLabel);
   setText("stockOffLabel", uiText.stockOffLabel);
   setText("promoOnLabel", uiText.promoOnLabel);
+  setText("hotSellingVisibleLabel", uiText.hotSellingVisibleLabel);
+  setText("resellerActiveLabel", uiText.resellerActiveLabel);
+  setText("totalLeadLabel", uiText.totalLeadLabel);
+  setText("hotSellingRuleText", uiText.hotSellingRuleText);
+  setText("leadTotalLabel", uiText.leadTotalLabel);
+  setText("leadAssignedLabel", uiText.leadAssignedLabel);
+  setText("leadReassignedLabel", uiText.leadReassignedLabel);
+  setText("leadDistributionTitle", uiText.leadDistributionTitle);
 
   if (els.passwordInput) els.passwordInput.placeholder = uiText.passwordPlaceholder;
   if (els.promoSearch) els.promoSearch.placeholder = uiText.promoSearchPlaceholder;
+  if (els.resellerSearch) els.resellerSearch.placeholder = uiText.resellerSearchPlaceholder;
 
   if (els.promoFilter) {
     els.promoFilter.innerHTML = `
@@ -431,6 +489,7 @@ function bindEvents() {
 
   els.promoSearch.addEventListener("input", renderPromos);
   els.promoFilter.addEventListener("change", renderPromos);
+  els.resellerSearch?.addEventListener("input", renderResellers);
 }
 
 async function login() {
@@ -491,17 +550,24 @@ async function loadData() {
 
   try {
     const result = await jsonp({
-      mode: "getWebsiteControl",
+      mode: "getAdminControl",
+      password: adminPassword,
       _: Date.now()
     });
 
     if (!result.ok) throw new Error(result.error || "Gagal baca data.");
 
-    data = result.data || { stock: [], promos: [], meta: {} };
+    data = result.data || {
+      stock: [], promos: [], visibleHotSelling: [], hotSellingControl: [],
+      resellers: [], leadSummary: {}, meta: {}
+    };
 
     renderDashboard();
     renderStock();
     renderPromos();
+    renderHotSelling();
+    renderResellers();
+    renderLead();
 
     showMessage(els.globalMsg, uiText.syncSuccess, "success");
   } catch (error) {
@@ -520,6 +586,10 @@ function renderDashboard() {
   els.promoOnCount.textContent = promoItems.length;
   els.stockOffDetailCount.textContent = stockOffItems.length;
   els.promoActiveDetailCount.textContent = promoItems.length;
+  if (els.hotSellingVisibleCount) els.hotSellingVisibleCount.textContent = (data.visibleHotSelling || []).length;
+  if (els.resellerActiveCount) els.resellerActiveCount.textContent =
+    (data.resellers || []).filter(item => normalize(item.status) === "ON").length;
+  if (els.totalLeadCount) els.totalLeadCount.textContent = data.leadSummary?.totalLeads || 0;
 
   renderStockOffList(stockOffItems);
   renderPromoActiveList(promoItems);
@@ -1002,6 +1072,248 @@ async function savePromo(card) {
   } finally {
     setLoading(button, false, uiText.savePromo);
   }
+}
+
+
+function renderHotSelling() {
+  if (!els.hotSellingList) return;
+
+  const items = [...(data.hotSellingControl || [])]
+    .sort((a, b) => Number(a.position || 999) - Number(b.position || 999));
+
+  if (!items.length) {
+    els.hotSellingList.innerHTML = `<div class="empty">${safeText(uiText.noHotSelling)}</div>`;
+    return;
+  }
+
+  els.hotSellingList.innerHTML = items.map(item => {
+    const promo = findPromo(item.product, item.section || "ALL", item.duration);
+    const visible = findVisibleHotSelling(item.product, item.section || "ALL", item.duration);
+    const promoReady = promo && isPromoOn(promo) && promo.promoPrice;
+    const statusOn = normalize(item.status) === "ON";
+
+    return `
+      <details class="manage-card hot-selling-card"
+        data-product="${safeAttr(item.product)}"
+        data-section="${safeAttr(item.section || "ALL")}"
+        data-duration="${safeAttr(item.duration)}">
+        <summary>
+          <div class="manage-title">
+            <strong>🔥 ${safeText(item.product)}</strong>
+            <span>${safeText(item.duration)} • ${safeText(item.badge || "Hot Selling")}</span>
+          </div>
+          <div class="manage-summary-right">
+            <span class="status-pill ${visible ? "" : "gray"}">${safeText(visible ? uiText.visibleLabel : uiText.hiddenLabel)}</span>
+            <span class="stock-arrow">›</span>
+          </div>
+        </summary>
+
+        <div class="manage-body">
+          <div class="helper-box ${visible ? "success-box" : "warning-box"}">
+            ${visible
+              ? `✅ Dipaparkan di website • Harga promo: <strong>${safeText(visible.promoPrice)}</strong>`
+              : `Disorok daripada website. ${statusOn ? (promoReady ? "" : "Pastikan Promo Control ON dan Promo Price diisi.") : "Status Hot Selling masih OFF."}`
+            }
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label class="field-label">${safeText(uiText.hotSellingStatus)}</label>
+              <select class="select hot-status">
+                <option value="ON" ${statusOn ? "selected" : ""}>ON</option>
+                <option value="OFF" ${!statusOn ? "selected" : ""}>OFF</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">${safeText(uiText.positionLabel)}</label>
+              <input class="input hot-position" type="number" min="1" value="${safeAttr(item.position || "")}">
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label">${safeText(uiText.hotBadgeLabel)}</label>
+            <input class="input hot-badge" type="text" value="${safeAttr(item.badge || "Hot Selling")}">
+          </div>
+
+          <div class="read-info">
+            <span>Promo Control</span>
+            <strong>${safeText(promoReady ? "ON • " + promo.promoPrice : "OFF / Tiada Harga Promo")}</strong>
+          </div>
+
+          <button class="btn save-hot-selling" type="button">${safeText(uiText.saveHotSelling)}</button>
+        </div>
+      </details>
+    `;
+  }).join("");
+
+  els.hotSellingList.querySelectorAll(".hot-selling-card").forEach(card => {
+    card.querySelector(".save-hot-selling")?.addEventListener("click", () => saveHotSelling(card));
+  });
+}
+
+function findVisibleHotSelling(product, section, duration) {
+  return (data.visibleHotSelling || []).find(item =>
+    normalize(item.product) === normalize(product) &&
+    normalize(item.section || "ALL") === normalize(section || "ALL") &&
+    normalize(item.duration) === normalize(duration)
+  );
+}
+
+async function saveHotSelling(card) {
+  const button = card.querySelector(".save-hot-selling");
+  setLoading(button, true, uiText.saving);
+
+  try {
+    const result = await jsonp({
+      mode: "saveHotSelling",
+      password: adminPassword,
+      product: card.dataset.product,
+      section: card.dataset.section || "ALL",
+      duration: card.dataset.duration,
+      status: card.querySelector(".hot-status").value,
+      position: card.querySelector(".hot-position").value.trim(),
+      badge: card.querySelector(".hot-badge").value.trim() || "Hot Selling"
+    });
+
+    if (!result.ok) throw new Error(result.error || "Gagal save Hot Selling.");
+
+    showMessage(els.globalMsg, uiText.saveHotSellingSuccess, "success");
+    await loadData();
+  } catch (error) {
+    showMessage(els.globalMsg, uiText.saveHotSellingFailed + error.message, "error");
+  } finally {
+    setLoading(button, false, uiText.saveHotSelling);
+  }
+}
+
+function renderResellers() {
+  if (!els.resellerList) return;
+
+  const keyword = normalize(els.resellerSearch?.value || "");
+  const items = [...(data.resellers || [])]
+    .sort((a, b) => Number(a.position || 999) - Number(b.position || 999))
+    .filter(item => !keyword || normalize(`${item.code} ${item.name} ${item.telegramUsername}`).includes(keyword));
+
+  if (!items.length) {
+    els.resellerList.innerHTML = `<div class="empty">${safeText(uiText.noReseller)}</div>`;
+    return;
+  }
+
+  els.resellerList.innerHTML = items.map(item => {
+    const active = normalize(item.status) === "ON";
+
+    return `
+      <details class="manage-card reseller-card" data-code="${safeAttr(item.code)}">
+        <summary>
+          <div class="manage-title">
+            <strong>${safeText(item.code)} • ${safeText(item.name)}</strong>
+            <span>@${safeText(item.telegramUsername)} • ${safeText(item.leadCount || 0)} lead</span>
+          </div>
+          <div class="manage-summary-right">
+            <span class="status-pill ${active ? "" : "off"}">${safeText(active ? uiText.onLabel : uiText.offLabel)}</span>
+            <span class="stock-arrow">›</span>
+          </div>
+        </summary>
+
+        <div class="manage-body">
+          <div class="form-grid">
+            <div>
+              <label class="field-label">${safeText(uiText.resellerNameLabel)}</label>
+              <input class="input reseller-name" type="text" value="${safeAttr(item.name)}">
+            </div>
+            <div>
+              <label class="field-label">${safeText(uiText.telegramUsernameLabel)}</label>
+              <input class="input reseller-telegram" type="text" value="${safeAttr(item.telegramUsername)}" placeholder="Tanpa @">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label class="field-label">${safeText(uiText.statusLabel)}</label>
+              <select class="select reseller-status">
+                <option value="ON" ${active ? "selected" : ""}>ON</option>
+                <option value="OFF" ${!active ? "selected" : ""}>OFF</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">${safeText(uiText.positionLabel)}</label>
+              <input class="input reseller-position" type="number" min="1" value="${safeAttr(item.position || "")}">
+            </div>
+          </div>
+
+          <div class="meta-info-grid">
+            <div class="read-info">
+              <span>${safeText(uiText.leadCountLabel)}</span>
+              <strong>${safeText(item.leadCount || 0)}</strong>
+            </div>
+            <div class="read-info">
+              <span>${safeText(uiText.lastAssignedLabel)}</span>
+              <strong>${safeText(item.lastAssigned || "-")}</strong>
+            </div>
+          </div>
+
+          <button class="btn save-reseller" type="button">${safeText(uiText.saveReseller)}</button>
+        </div>
+      </details>
+    `;
+  }).join("");
+
+  els.resellerList.querySelectorAll(".reseller-card").forEach(card => {
+    card.querySelector(".save-reseller")?.addEventListener("click", () => saveReseller(card));
+  });
+}
+
+async function saveReseller(card) {
+  const button = card.querySelector(".save-reseller");
+  setLoading(button, true, uiText.saving);
+
+  try {
+    const result = await jsonp({
+      mode: "saveReseller",
+      password: adminPassword,
+      code: card.dataset.code,
+      name: card.querySelector(".reseller-name").value.trim(),
+      telegramUsername: card.querySelector(".reseller-telegram").value.trim(),
+      status: card.querySelector(".reseller-status").value,
+      position: card.querySelector(".reseller-position").value.trim()
+    });
+
+    if (!result.ok) throw new Error(result.error || "Gagal save reseller.");
+
+    showMessage(els.globalMsg, uiText.saveResellerSuccess, "success");
+    await loadData();
+  } catch (error) {
+    showMessage(els.globalMsg, uiText.saveResellerFailed + error.message, "error");
+  } finally {
+    setLoading(button, false, uiText.saveReseller);
+  }
+}
+
+function renderLead() {
+  if (!els.leadByReseller) return;
+
+  const summary = data.leadSummary || {};
+  if (els.leadTotalCount) els.leadTotalCount.textContent = summary.totalLeads || 0;
+  if (els.leadAssignedCount) els.leadAssignedCount.textContent = summary.assigned || 0;
+  if (els.leadReassignedCount) els.leadReassignedCount.textContent = summary.reassigned || 0;
+
+  const items = [...(summary.byReseller || [])].sort((a, b) => Number(b.leads || 0) - Number(a.leads || 0));
+
+  if (!items.length) {
+    els.leadByReseller.innerHTML = `<div class="empty">${safeText(uiText.noLead)}</div>`;
+    return;
+  }
+
+  els.leadByReseller.innerHTML = items.map((item, index) => `
+    <article class="lead-row">
+      <div class="rank">${index + 1}</div>
+      <div class="lead-name">
+        <strong>${safeText(item.name)}</strong>
+        <span>${safeText(item.code)}</span>
+      </div>
+      <div class="lead-total">${safeText(item.leads)} lead</div>
+    </article>
+  `).join("");
 }
 
 function jumpToStock(product, section) {

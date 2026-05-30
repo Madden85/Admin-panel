@@ -11,14 +11,14 @@ window.NUMO_ADMIN_TEXT = {
   // Top buttons
   refresh: "Refresh",
   logout: "Logout",
-  login: "LOG IN",
+  login: "Login",
   checking: "Checking...",
   loading: "Loading...",
   saving: "Saving...",
 
   // Login
   passwordLabel: "Admin Password",
-  passwordPlaceholder: "HINT: Honda HRV",
+  passwordPlaceholder: "Masukkan password admin",
 
   // Tabs
   tabDashboard: "Dashboard",
@@ -76,5 +76,45 @@ window.NUMO_ADMIN_TEXT = {
   savePromoSuccess: "Promo berjaya disimpan.",
   savePromoFailed: "Gagal save promo: ",
   promoPriceRequired: "Isi Promo Price dulu kalau Promo Active = ON.",
-  customBadgeRequired: "Isi Custom Badge Text dulu kalau pilih Custom."
+  customBadgeRequired: "Isi Custom Badge Text dulu kalau pilih Custom.",
+
+  // New tabs
+  tabHotSelling: "Hot Selling",
+  tabReseller: "Reseller",
+  tabLead: "Lead",
+
+  // New dashboard counters
+  hotSellingVisibleLabel: "Hot Selling Visible",
+  resellerActiveLabel: "Reseller Aktif",
+  totalLeadLabel: "Total Lead",
+
+  // Hot Selling
+  noHotSelling: "Tiada item Hot Selling dijumpai.",
+  hotSellingStatus: "Status Hot Selling",
+  positionLabel: "Position",
+  hotBadgeLabel: "Badge Hot Selling",
+  hiddenLabel: "Disorok",
+  visibleLabel: "VISIBLE",
+  saveHotSelling: "Save Hot Selling",
+  saveHotSellingSuccess: "Hot Selling berjaya disimpan.",
+  saveHotSellingFailed: "Gagal save Hot Selling: ",
+  hotSellingRuleText: "Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo.",
+
+  // Reseller
+  resellerSearchPlaceholder: "Cari nama atau Telegram reseller",
+  noReseller: "Tiada reseller dijumpai.",
+  telegramUsernameLabel: "Telegram Username",
+  resellerNameLabel: "Nama Reseller",
+  leadCountLabel: "Lead Count",
+  lastAssignedLabel: "Last Assigned",
+  saveReseller: "Save Reseller",
+  saveResellerSuccess: "Reseller berjaya disimpan.",
+  saveResellerFailed: "Gagal save reseller: ",
+
+  // Lead
+  leadTotalLabel: "Jumlah Lead",
+  leadAssignedLabel: "Assigned",
+  leadReassignedLabel: "Reassigned",
+  leadDistributionTitle: "Agihan Lead Mengikut Reseller",
+  noLead: "Belum ada lead direkodkan."
 };
