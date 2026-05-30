@@ -110,7 +110,16 @@ let uiText = {
   leadReassignedLabel: "Reassigned",
   leadDistributionTitle: "Agihan Lead Mengikut Reseller",
   noLead: "Belum ada lead direkodkan.",
-  hotSellingRuleText: "Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo."
+  hotSellingRuleText: "Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo.",
+  hotSellingLimitTitle: "Hot Selling Aktif",
+  hotSellingMaxText: "Maximum 3 pakej sahaja boleh diaktifkan pada satu masa.",
+  hotSellingSearchPlaceholder: "Cari produk atau pakej",
+  hotFilterAll: "Semua pakej",
+  hotFilterOn: "Hot Selling ON",
+  hotFilterPromo: "Promo Aktif",
+  hotFilterVisible: "Visible di Website",
+  hotLimitError: "Maximum 3 Hot Selling sahaja dibenarkan. Tutup salah satu Hot Selling yang sedang aktif dahulu.",
+  promoNotReady: "Promo belum aktif / tiada harga promo"
 };
 
 let editableContent = {
@@ -347,6 +356,7 @@ let data = {
   promos: [],
   visibleHotSelling: [],
   hotSellingControl: [],
+  hotSellingOptions: [],
   resellers: [],
   leadSummary: {},
   meta: {}
@@ -379,6 +389,7 @@ function cacheElements() {
     "stockOnCount","stockOffCount","promoOnCount","stockOffDetailCount","promoActiveDetailCount",
     "stockOffList","promoActiveList","stockGrid","promoSearch","promoFilter","promoGroups",
     "hotSellingVisibleCount","resellerActiveCount","totalLeadCount","hotSellingList",
+    "hotSellingSearch","hotSellingFilter","hotSellingActiveCount","hotSellingMaxCount","hotSellingLimitTitle","hotSellingMaxText",
     "resellerSearch","resellerList","leadTotalCount","leadAssignedCount","leadReassignedCount","leadByReseller"
   ].forEach(id => els[id] = document.getElementById(id));
 }
@@ -437,6 +448,8 @@ function applyButtonText() {
   setText("resellerActiveLabel", uiText.resellerActiveLabel);
   setText("totalLeadLabel", uiText.totalLeadLabel);
   setText("hotSellingRuleText", uiText.hotSellingRuleText);
+  setText("hotSellingLimitTitle", uiText.hotSellingLimitTitle);
+  setText("hotSellingMaxText", uiText.hotSellingMaxText);
   setText("leadTotalLabel", uiText.leadTotalLabel);
   setText("leadAssignedLabel", uiText.leadAssignedLabel);
   setText("leadReassignedLabel", uiText.leadReassignedLabel);
@@ -445,6 +458,16 @@ function applyButtonText() {
   if (els.passwordInput) els.passwordInput.placeholder = uiText.passwordPlaceholder;
   if (els.promoSearch) els.promoSearch.placeholder = uiText.promoSearchPlaceholder;
   if (els.resellerSearch) els.resellerSearch.placeholder = uiText.resellerSearchPlaceholder;
+  if (els.hotSellingSearch) els.hotSellingSearch.placeholder = uiText.hotSellingSearchPlaceholder;
+
+  if (els.hotSellingFilter) {
+    els.hotSellingFilter.innerHTML = `
+      <option value="ALL">${safeText(uiText.hotFilterAll)}</option>
+      <option value="ON">${safeText(uiText.hotFilterOn)}</option>
+      <option value="PROMO">${safeText(uiText.hotFilterPromo)}</option>
+      <option value="VISIBLE">${safeText(uiText.hotFilterVisible)}</option>
+    `;
+  }
 
   if (els.promoFilter) {
     els.promoFilter.innerHTML = `
@@ -490,6 +513,8 @@ function bindEvents() {
   els.promoSearch.addEventListener("input", renderPromos);
   els.promoFilter.addEventListener("change", renderPromos);
   els.resellerSearch?.addEventListener("input", renderResellers);
+  els.hotSellingSearch?.addEventListener("input", renderHotSelling);
+  els.hotSellingFilter?.addEventListener("change", renderHotSelling);
 }
 
 async function login() {
@@ -558,7 +583,7 @@ async function loadData() {
     if (!result.ok) throw new Error(result.error || "Gagal baca data.");
 
     data = result.data || {
-      stock: [], promos: [], visibleHotSelling: [], hotSellingControl: [],
+      stock: [], promos: [], visibleHotSelling: [], hotSellingControl: [], hotSellingOptions: [],
       resellers: [], leadSummary: {}, meta: {}
     };
 
@@ -1078,69 +1103,81 @@ async function savePromo(card) {
 function renderHotSelling() {
   if (!els.hotSellingList) return;
 
-  const items = [...(data.hotSellingControl || [])]
-    .sort((a, b) => Number(a.position || 999) - Number(b.position || 999));
+  const allItems = [...(data.hotSellingOptions || data.hotSellingControl || [])];
+  const maxActive = Number(data.meta?.maxHotSelling || 3);
+  const activeCount = allItems.filter(item => normalize(item.status) === "ON").length;
+
+  if (els.hotSellingActiveCount) els.hotSellingActiveCount.textContent = activeCount;
+  if (els.hotSellingMaxCount) els.hotSellingMaxCount.textContent = maxActive;
+
+  const limitCard = els.hotSellingActiveCount?.closest(".hot-limit-card");
+  limitCard?.classList.toggle("full", activeCount >= maxActive);
+
+  const keyword = normalize(els.hotSellingSearch?.value || "");
+  const filter = els.hotSellingFilter?.value || "ALL";
+
+  const items = allItems
+    .filter(item => {
+      const promoReady = isHotPromoReady(item);
+      const visible = Boolean(item.visible) || Boolean(findVisibleHotSelling(item.product, item.section || "ALL", item.duration));
+      const statusOn = normalize(item.status) === "ON";
+      const haystack = normalize(`${item.product} ${item.section || "ALL"} ${item.duration} ${item.promoPrice || ""} ${item.badge || ""}`);
+
+      if (keyword && !haystack.includes(keyword)) return false;
+      if (filter === "ON" && !statusOn) return false;
+      if (filter === "PROMO" && !promoReady) return false;
+      if (filter === "VISIBLE" && !visible) return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      const productSort = String(a.product || "").localeCompare(String(b.product || ""));
+      if (productSort !== 0) return productSort;
+
+      const sectionSort = String(a.section || "").localeCompare(String(b.section || ""));
+      if (sectionSort !== 0) return sectionSort;
+
+      return Number(a.position || 999) - Number(b.position || 999);
+    });
 
   if (!items.length) {
     els.hotSellingList.innerHTML = `<div class="empty">${safeText(uiText.noHotSelling)}</div>`;
     return;
   }
 
-  els.hotSellingList.innerHTML = items.map(item => {
-    const promo = findPromo(item.product, item.section || "ALL", item.duration);
-    const visible = findVisibleHotSelling(item.product, item.section || "ALL", item.duration);
-    const promoReady = promo && isPromoOn(promo) && promo.promoPrice;
-    const statusOn = normalize(item.status) === "ON";
+  const groups = [];
 
+  items.forEach(item => {
+    const key = `${item.product}||${item.section || "ALL"}`;
+    let group = groups.find(entry => entry.key === key);
+
+    if (!group) {
+      const labelInfo = getHotGroupLabel(item.product, item.section || "ALL");
+      group = {
+        key,
+        title: labelInfo.title,
+        icon: labelInfo.icon,
+        items: []
+      };
+      groups.push(group);
+    }
+
+    group.items.push(item);
+  });
+
+  els.hotSellingList.innerHTML = groups.map((group, index) => {
+    const groupOn = group.items.filter(item => normalize(item.status) === "ON").length;
     return `
-      <details class="manage-card hot-selling-card"
-        data-product="${safeAttr(item.product)}"
-        data-section="${safeAttr(item.section || "ALL")}"
-        data-duration="${safeAttr(item.duration)}">
+      <details class="hot-group" ${index === 0 ? "open" : ""}>
         <summary>
           <div class="manage-title">
-            <strong>🔥 ${safeText(item.product)}</strong>
-            <span>${safeText(item.duration)} • ${safeText(item.badge || "Hot Selling")}</span>
+            <strong>${safeText(group.icon + " " + group.title)}</strong>
+            <span>${group.items.length} pakej • ${groupOn} Hot Selling ON</span>
           </div>
-          <div class="manage-summary-right">
-            <span class="status-pill ${visible ? "" : "gray"}">${safeText(visible ? uiText.visibleLabel : uiText.hiddenLabel)}</span>
-            <span class="stock-arrow">›</span>
-          </div>
+          <span class="stock-arrow">›</span>
         </summary>
-
-        <div class="manage-body">
-          <div class="helper-box ${visible ? "success-box" : "warning-box"}">
-            ${visible
-              ? `✅ Dipaparkan di website • Harga promo: <strong>${safeText(visible.promoPrice)}</strong>`
-              : `Disorok daripada website. ${statusOn ? (promoReady ? "" : "Pastikan Promo Control ON dan Promo Price diisi.") : "Status Hot Selling masih OFF."}`
-            }
-          </div>
-
-          <div class="form-grid">
-            <div>
-              <label class="field-label">${safeText(uiText.hotSellingStatus)}</label>
-              <select class="select hot-status">
-                <option value="ON" ${statusOn ? "selected" : ""}>ON</option>
-                <option value="OFF" ${!statusOn ? "selected" : ""}>OFF</option>
-              </select>
-            </div>
-            <div>
-              <label class="field-label">${safeText(uiText.positionLabel)}</label>
-              <input class="input hot-position" type="number" min="1" value="${safeAttr(item.position || "")}">
-            </div>
-          </div>
-
-          <div>
-            <label class="field-label">${safeText(uiText.hotBadgeLabel)}</label>
-            <input class="input hot-badge" type="text" value="${safeAttr(item.badge || "Hot Selling")}">
-          </div>
-
-          <div class="read-info">
-            <span>Promo Control</span>
-            <strong>${safeText(promoReady ? "ON • " + promo.promoPrice : "OFF / Tiada Harga Promo")}</strong>
-          </div>
-
-          <button class="btn save-hot-selling" type="button">${safeText(uiText.saveHotSelling)}</button>
+        <div class="hot-plan-list">
+          ${group.items.map(item => renderHotSellingCard(item)).join("")}
         </div>
       </details>
     `;
@@ -1149,6 +1186,89 @@ function renderHotSelling() {
   els.hotSellingList.querySelectorAll(".hot-selling-card").forEach(card => {
     card.querySelector(".save-hot-selling")?.addEventListener("click", () => saveHotSelling(card));
   });
+}
+
+function getHotGroupLabel(product, section) {
+  const group = PRODUCT_GROUPS.find(item =>
+    normalize(item.product) === normalize(product) &&
+    normalize(item.section || "ALL") === normalize(section || "ALL")
+  );
+
+  if (group) {
+    return { title: group.label, icon: group.icon };
+  }
+
+  return { title: product + (section !== "ALL" ? " - " + section : ""), icon: "🔥" };
+}
+
+function isHotPromoReady(item) {
+  return isPromoOn(item) && Boolean(item.promoPrice);
+}
+
+function renderHotSellingCard(item) {
+  const visibleItem = findVisibleHotSelling(item.product, item.section || "ALL", item.duration);
+  const visible = Boolean(item.visible) || Boolean(visibleItem);
+  const promoReady = isHotPromoReady(item);
+  const statusOn = normalize(item.status) === "ON";
+  const maxActive = Number(data.meta?.maxHotSelling || 3);
+
+  return `
+    <details class="hot-plan-card hot-selling-card"
+      data-product="${safeAttr(item.product)}"
+      data-section="${safeAttr(item.section || "ALL")}"
+      data-duration="${safeAttr(item.duration)}"
+      data-saved-status="${safeAttr(statusOn ? "ON" : "OFF")}">
+      <summary>
+        <div class="manage-title">
+          <strong>${safeText(item.duration)}</strong>
+          <div class="hot-plan-meta">
+            <span class="mini-status ${statusOn ? "on" : ""}">${safeText(statusOn ? "HOT ON" : "HOT OFF")}</span>
+            <span class="mini-status ${promoReady ? "promo" : ""}">${safeText(promoReady ? "PROMO " + item.promoPrice : "PROMO OFF")}</span>
+          </div>
+        </div>
+        <span class="status-pill ${visible ? "" : "gray"}">${safeText(visible ? uiText.visibleLabel : uiText.hiddenLabel)}</span>
+      </summary>
+
+      <div class="hot-plan-body">
+        <div class="helper-box ${visible ? "success-box" : "warning-box"}">
+          ${visible
+            ? `✅ Dipaparkan di website • Harga promo: <strong>${safeText(item.promoPrice)}</strong>`
+            : statusOn
+              ? `Disorok daripada website. ${safeText(uiText.promoNotReady)}.`
+              : `Status Hot Selling masih OFF. Promo semasa: <strong>${safeText(promoReady ? item.promoPrice : "OFF")}</strong>.`
+          }
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label">${safeText(uiText.hotSellingStatus)}</label>
+            <select class="select hot-status">
+              <option value="OFF" ${!statusOn ? "selected" : ""}>OFF</option>
+              <option value="ON" ${statusOn ? "selected" : ""}>ON</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">${safeText(uiText.positionLabel)}</label>
+            <select class="select hot-position">
+              ${[1,2,3].map(position => `<option value="${position}" ${Number(item.position) === position ? "selected" : ""}>${position}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label">${safeText(uiText.hotBadgeLabel)}</label>
+          <input class="input hot-badge" type="text" value="${safeAttr(item.badge || "Hot Selling")}" placeholder="Contoh: Must buy">
+        </div>
+
+        <div class="read-info">
+          <span>Promo Control</span>
+          <strong>${safeText(promoReady ? "ON • " + item.promoPrice : "OFF / Tiada Harga Promo")}</strong>
+        </div>
+
+        <button class="btn save-hot-selling" type="button">${safeText(uiText.saveHotSelling)}</button>
+      </div>
+    </details>
+  `;
 }
 
 function findVisibleHotSelling(product, section, duration) {
@@ -1161,6 +1281,17 @@ function findVisibleHotSelling(product, section, duration) {
 
 async function saveHotSelling(card) {
   const button = card.querySelector(".save-hot-selling");
+  const requestedStatus = card.querySelector(".hot-status").value;
+  const savedStatus = card.dataset.savedStatus || "OFF";
+  const activeCount = (data.hotSellingOptions || data.hotSellingControl || [])
+    .filter(item => normalize(item.status) === "ON").length;
+  const maxActive = Number(data.meta?.maxHotSelling || 3);
+
+  if (requestedStatus === "ON" && savedStatus !== "ON" && activeCount >= maxActive) {
+    showMessage(els.globalMsg, uiText.hotLimitError, "error");
+    return;
+  }
+
   setLoading(button, true, uiText.saving);
 
   try {
@@ -1170,8 +1301,8 @@ async function saveHotSelling(card) {
       product: card.dataset.product,
       section: card.dataset.section || "ALL",
       duration: card.dataset.duration,
-      status: card.querySelector(".hot-status").value,
-      position: card.querySelector(".hot-position").value.trim(),
+      status: requestedStatus,
+      position: card.querySelector(".hot-position").value,
       badge: card.querySelector(".hot-badge").value.trim() || "Hot Selling"
     });
 

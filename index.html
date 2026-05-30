@@ -1017,6 +1017,164 @@
       .meta-info-grid, .lead-summary-grid { grid-template-columns: 1fr; }
     }
 
+    /* STEP 3 V5.1 - ALL HOT SELLING OPTIONS, MAX 3 */
+    .hot-limit-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 17px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .hot-limit-card strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .hot-limit-card p {
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .hot-limit-number {
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 9px 13px;
+      min-width: 72px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .hot-limit-card.full {
+      background: var(--red-soft);
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    .hot-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .hot-groups {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hot-group {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .hot-group > summary {
+      list-style: none;
+      cursor: pointer;
+      background: #f8fafc;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hot-group > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .hot-group[open] > summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hot-group[open] > summary .stock-arrow {
+      transform: rotate(90deg);
+    }
+
+    .hot-plan-list {
+      display: grid;
+      gap: 10px;
+      padding: 11px;
+    }
+
+    .hot-plan-card {
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .hot-plan-card > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px;
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 9px;
+    }
+
+    .hot-plan-card > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .hot-plan-card[open] > summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hot-plan-body {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .hot-plan-meta {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+
+    .mini-status {
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .mini-status.on {
+      background: var(--green-soft);
+      color: #166534;
+    }
+
+    .mini-status.promo {
+      background: var(--yellow-soft);
+      color: #92400e;
+    }
+
+    @media (max-width: 560px) {
+      .hot-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .hot-limit-card {
+        align-items: flex-start;
+      }
+    }
+
   </style>
 </head>
 
@@ -1167,11 +1325,33 @@
           <div class="section-head">
             <div>
               <h2 id="hotSellingTitle">Hot Selling Control</h2>
-              <p id="hotSellingText">Pilih highlight untuk website. Harga akan ikut promo yang aktif dalam Promo Control.</p>
+              <p id="hotSellingText">Pilih mana-mana pakej promo untuk dipaparkan di website customer.</p>
             </div>
           </div>
+
           <div id="hotSellingRuleText" class="info-note">Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo.</div>
-          <div id="hotSellingList" class="manage-list"></div>
+
+          <div class="hot-limit-card">
+            <div>
+              <strong id="hotSellingLimitTitle">Hot Selling Aktif</strong>
+              <p id="hotSellingMaxText">Maximum 3 pakej sahaja boleh diaktifkan pada satu masa.</p>
+            </div>
+            <div class="hot-limit-number">
+              <span id="hotSellingActiveCount">0</span> / <span id="hotSellingMaxCount">3</span>
+            </div>
+          </div>
+
+          <div class="hot-toolbar">
+            <input id="hotSellingSearch" class="input" type="search" placeholder="Cari produk atau pakej">
+            <select id="hotSellingFilter" class="select">
+              <option value="ALL">Semua pakej</option>
+              <option value="ON">Hot Selling ON</option>
+              <option value="PROMO">Promo Aktif</option>
+              <option value="VISIBLE">Visible di Website</option>
+            </select>
+          </div>
+
+          <div id="hotSellingList" class="hot-groups"></div>
         </section>
 
         <section id="reseller" class="section">

@@ -99,6 +99,15 @@ window.NUMO_ADMIN_TEXT = {
   saveHotSellingSuccess: "Hot Selling berjaya disimpan.",
   saveHotSellingFailed: "Gagal save Hot Selling: ",
   hotSellingRuleText: "Harga Hot Selling ikut Promo Control. Item hanya keluar di website apabila promo aktif dan ada harga promo.",
+  hotSellingLimitTitle: "Hot Selling Aktif",
+  hotSellingMaxText: "Maximum 3 pakej sahaja boleh diaktifkan pada satu masa.",
+  hotSellingSearchPlaceholder: "Cari produk atau pakej",
+  hotFilterAll: "Semua pakej",
+  hotFilterOn: "Hot Selling ON",
+  hotFilterPromo: "Promo Aktif",
+  hotFilterVisible: "Visible di Website",
+  hotLimitError: "Maximum 3 Hot Selling sahaja dibenarkan. Tutup salah satu Hot Selling yang sedang aktif dahulu.",
+  promoNotReady: "Promo belum aktif / tiada harga promo",
 
   // Reseller
   resellerSearchPlaceholder: "Cari nama atau Telegram reseller",
