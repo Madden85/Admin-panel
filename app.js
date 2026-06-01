@@ -1,5 +1,6 @@
 /***********************
  * NUMO ADMIN PANEL - APP.JS
+ * VERSION V5.2 - LIVE DATABASE STOCK + MANUAL CONTROL
  * FUNCTION / LOGIC SAHAJA
  *
  * index.html  = mainpage/layout admin
@@ -52,6 +53,15 @@ let uiText = {
   save: "Save",
   setupNeeded: "SETUP NEEDED",
   stockOffTextDefault: "Habis Stok",
+  liveStockLabel: "Live Database Stock",
+  customerViewLabel: "Paparan Customer",
+  manualControlLabel: "Manual Control",
+  slotAvailableLabel: "slot available",
+  readyCustomerLabel: "READY",
+  habisCustomerLabel: "HABIS STOK",
+  closedManualLabel: "DITUTUP MANUAL",
+  databaseNotFoundLabel: "Data live tidak dijumpai",
+  databaseSourceLabel: "Sumber live",
   promoSearchPlaceholder: "Cari produk atau plan",
   filterAll: "Semua plan",
   filterOn: "Promo ON sahaja",
@@ -129,13 +139,13 @@ let editableContent = {
   heroTitle: "Kawal stock dan promo dengan lebih mudah.",
   heroText: "Layout simple untuk edit stock, promo price, promo badge dan Sooka device.",
   dashboardTitle: "Dashboard",
-  dashboardText: "Ringkasan status website customer daripada Google Sheet.",
+  dashboardText: "Ringkasan stock live database sebenar, promo dan reseller website customer.",
   stockOffDetailTitle: "Produk / Device Stock OFF",
   stockOffDetailText: "Tekan untuk lihat item yang habis stok",
   promoActiveDetailTitle: "Plan Promo Aktif",
   promoActiveDetailText: "Tekan untuk lihat promo yang sedang ON",
   stockTitle: "Stock Control",
-  stockText: "Set ON/OFF untuk produk, YouTube type dan Sooka device.",
+  stockText: "Lihat slot sebenar daripada database dan tutup jualan secara manual jika perlu.",
   promoTitle: "Promo Control",
   promoText: "Buka produk yang nak edit sahaja supaya panel kekal kemas.",
   hotSellingTitle: "Hot Selling Control",
@@ -353,6 +363,8 @@ const STOCK_DISPLAY_GROUPS = [
 
 let data = {
   stock: [],
+  customerStock: [],
+  databaseStock: [],
   promos: [],
   visibleHotSelling: [],
   hotSellingControl: [],
@@ -583,9 +595,13 @@ async function loadData() {
     if (!result.ok) throw new Error(result.error || "Gagal baca data.");
 
     data = result.data || {
-      stock: [], promos: [], visibleHotSelling: [], hotSellingControl: [], hotSellingOptions: [],
+      stock: [], customerStock: [], databaseStock: [], promos: [], visibleHotSelling: [], hotSellingControl: [], hotSellingOptions: [],
       resellers: [], leadSummary: {}, meta: {}
     };
+
+    data.stock = data.stock || [];
+    data.customerStock = data.customerStock || [];
+    data.databaseStock = data.databaseStock || [];
 
     renderDashboard();
     renderStock();
@@ -605,8 +621,9 @@ async function loadData() {
 function renderDashboard() {
   const stockOffItems = getStockOffItems();
   const promoItems = getActivePromoItems();
+  const customerStock = getCustomerStockItems();
 
-  els.stockOnCount.textContent = data.stock.filter(item => normalize(item.status) === "ON").length;
+  els.stockOnCount.textContent = customerStock.filter(item => normalize(item.status) === "ON").length;
   els.stockOffCount.textContent = stockOffItems.length;
   els.promoOnCount.textContent = promoItems.length;
   els.stockOffDetailCount.textContent = stockOffItems.length;
@@ -625,10 +642,21 @@ function getStockOffItems() {
 
   STOCK_GROUPS.forEach(group => {
     group.rows.forEach(row => {
-      const stock = findStock(row.product, row.section);
+      const customerStock = findCustomerStock(row.product, row.section);
+      const manualStock = findStock(row.product, row.section);
+      const liveStock = findDatabaseStock(row.product, row.section);
 
-      if (stock && normalize(stock.status) === "OFF") {
-        items.push({ ...row, groupTitle: group.title, stockText: stock.stockText || uiText.stockOffTextDefault });
+      if (customerStock && normalize(customerStock.status) === "OFF") {
+        const reason = normalize(manualStock?.status) === "OFF"
+          ? uiText.closedManualLabel
+          : uiText.habisCustomerLabel;
+
+        items.push({
+          ...row,
+          groupTitle: group.title,
+          stockText: reason,
+          availableSlots: liveStock?.availableSlots ?? customerStock.availableSlots ?? 0
+        });
       }
     });
   });
@@ -662,7 +690,7 @@ function renderStockOffList(items) {
     <button class="jump-item" type="button" data-product="${safeAttr(item.product)}" data-section="${safeAttr(item.section)}">
       <div>
         <strong>${safeText(item.label)}</strong>
-        <span>${safeText(item.groupTitle)} • ${safeText(item.section)} • ${safeText(item.stockText)}</span>
+        <span>${safeText(item.groupTitle)} • ${safeText(item.stockText)} • ${safeText(String(item.availableSlots || 0))} ${safeText(uiText.slotAvailableLabel)}</span>
       </div>
       <strong>${safeText(uiText.editLabel)} ›</strong>
     </button>
@@ -747,24 +775,53 @@ function renderStockGroup(group) {
 }
 
 function renderStockRow(row) {
-  const stock = findStock(row.product, row.section);
-  const exists = Boolean(stock);
-  const status = exists ? (normalize(stock.status) === "OFF" ? "OFF" : "ON") : "MISSING";
-  const stockText = exists ? (stock.stockText || uiText.stockOffTextDefault) : uiText.stockOffTextDefault;
+  const manualStock = findStock(row.product, row.section);
+  const customerStock = findCustomerStock(row.product, row.section);
+  const liveStock = findDatabaseStock(row.product, row.section);
+
+  const exists = Boolean(manualStock);
+  const manualStatus = exists ? (normalize(manualStock.status) === "OFF" ? "OFF" : "ON") : "MISSING";
+  const stockText = exists ? (manualStock.stockText || uiText.stockOffTextDefault) : uiText.stockOffTextDefault;
+  const availableSlots = liveStock?.availableSlots ?? customerStock?.availableSlots ?? null;
+  const databaseSheet = liveStock?.databaseSheet || customerStock?.databaseSheet || "-";
+  const customerStatus = customerStock
+    ? (normalize(customerStock.status) === "ON" ? "ON" : "OFF")
+    : (manualStatus === "ON" ? "ON" : "OFF");
 
   return `
     <div id="${stockDomId(row.product, row.section)}"
       class="stock-edit-row"
       data-product="${safeAttr(row.product)}"
       data-section="${safeAttr(row.section)}"
-      data-status="${safeAttr(status)}">
+      data-status="${safeAttr(manualStatus)}"
+      data-customer-status="${safeAttr(customerStatus)}"
+      data-available-slots="${safeAttr(availableSlots === null ? "" : availableSlots)}">
 
       <div class="stock-edit-head">
         <div>
           <div class="stock-edit-name">${safeText(row.label)}</div>
           <div class="stock-edit-sub">${safeText(row.note)} • Section: ${safeText(row.section)}</div>
         </div>
-        <span class="status-pill"></span>
+        <span class="status-pill customer-pill"></span>
+      </div>
+
+      <div class="stock-live-box">
+        <div class="stock-live-info">
+          <span>${safeText(uiText.liveStockLabel)}</span>
+          <strong>${availableSlots === null
+            ? safeText(uiText.databaseNotFoundLabel)
+            : `${safeText(String(availableSlots))} ${safeText(uiText.slotAvailableLabel)}`}</strong>
+          <div class="database-chip">${safeText(databaseSheet)}</div>
+        </div>
+
+        <div class="stock-live-info">
+          <span>${safeText(uiText.customerViewLabel)}</span>
+          <strong class="customer-view-value"></strong>
+        </div>
+      </div>
+
+      <div class="stock-source-note">
+        Manual control hanya tutup/buka jualan. Jika live database sudah tiada slot, customer tetap nampak Habis Stok.
       </div>
 
       <div class="stock-controls">
@@ -774,7 +831,7 @@ function renderStockRow(row) {
         </div>
 
         <div>
-          <label class="field-label">${safeText(uiText.statusLabel)}</label>
+          <label class="field-label">${safeText(uiText.manualControlLabel)}</label>
           <div class="toggle-pair">
             <button class="toggle-btn toggle-on" type="button" ${exists ? "" : "disabled"}>${safeText(uiText.onLabel)}</button>
             <button class="toggle-btn toggle-off" type="button" ${exists ? "" : "disabled"}>${safeText(uiText.offLabel)}</button>
@@ -788,24 +845,49 @@ function renderStockRow(row) {
 }
 
 function updateStockVisual(row) {
-  const status = row.dataset.status;
-  const pill = row.querySelector(".status-pill");
+  const manualStatus = row.dataset.status;
+  const availableSlotsText = row.dataset.availableSlots;
+  const availableSlots = availableSlotsText === "" ? null : Number(availableSlotsText);
+  const customerIsReady = manualStatus === "ON" && (availableSlots === null || availableSlots > 0);
+  const manuallyClosed = manualStatus === "OFF";
+
+  const pill = row.querySelector(".customer-pill");
+  const customerView = row.querySelector(".customer-view-value");
   const onBtn = row.querySelector(".toggle-on");
   const offBtn = row.querySelector(".toggle-off");
 
-  onBtn?.classList.toggle("active-on", status === "ON");
-  offBtn?.classList.toggle("active-off", status === "OFF");
+  onBtn?.classList.toggle("active-on", manualStatus === "ON");
+  offBtn?.classList.toggle("active-off", manualStatus === "OFF");
 
-  if (!pill) return;
-
-  if (status === "MISSING") {
-    pill.className = "status-pill gray";
-    pill.textContent = uiText.setupNeeded;
+  if (manualStatus === "MISSING") {
+    if (pill) {
+      pill.className = "status-pill gray customer-pill";
+      pill.textContent = uiText.setupNeeded;
+    }
+    if (customerView) {
+      customerView.className = "customer-view-value live-off";
+      customerView.textContent = uiText.setupNeeded;
+    }
+    row.dataset.customerStatus = "OFF";
     return;
   }
 
-  pill.className = "status-pill " + (status === "OFF" ? "off" : "");
-  pill.textContent = status === "OFF" ? uiText.offLabel : uiText.onLabel;
+  const viewText = customerIsReady
+    ? uiText.readyCustomerLabel
+    : (manuallyClosed ? uiText.closedManualLabel : uiText.habisCustomerLabel);
+
+  row.dataset.customerStatus = customerIsReady ? "ON" : "OFF";
+
+  if (pill) {
+    pill.className = "status-pill customer-pill " + (customerIsReady ? "" : "off");
+    pill.textContent = viewText;
+  }
+
+  if (customerView) {
+    customerView.textContent = viewText;
+    customerView.className = "customer-view-value " +
+      (customerIsReady ? "live-ready" : (manuallyClosed ? "manual-off" : "live-off"));
+  }
 }
 
 function updateStockGroupSummary(card) {
@@ -815,23 +897,15 @@ function updateStockGroupSummary(card) {
   const subtitle = card.querySelector("[data-group-subtitle]");
 
   const total = rows.length;
-  const onCount = rows.filter(row => row.dataset.status === "ON").length;
-  const offCount = rows.filter(row => row.dataset.status === "OFF").length;
-  const missingCount = rows.filter(row => row.dataset.status === "MISSING").length;
+  const readyRows = rows.filter(row => row.dataset.customerStatus === "ON");
+  const slotTotal = rows.reduce((sum, row) => sum + Number(row.dataset.availableSlots || 0), 0);
 
   let text = "";
 
   if (total === 1) {
-    if (missingCount) {
-      text = uiText.setupNeeded;
-    } else {
-      text = onCount ? uiText.onLabel : uiText.offLabel;
-    }
+    text = `${slotTotal} ${uiText.slotAvailableLabel} • ${readyRows.length ? uiText.readyCustomerLabel : uiText.habisCustomerLabel}`;
   } else {
-    text = `${total} control • ${onCount} ${uiText.onLabel}`;
-
-    if (offCount) text += ` • ${offCount} ${uiText.offLabel}`;
-    if (missingCount) text += ` • ${missingCount} ${uiText.setupNeeded}`;
+    text = `${slotTotal} ${uiText.slotAvailableLabel} • ${readyRows.length}/${total} ${uiText.readyCustomerLabel}`;
   }
 
   if (subtitle) subtitle.textContent = text;
@@ -1488,6 +1562,24 @@ function highlightAndScroll(target) {
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.tab === tabId));
   document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === tabId));
+}
+
+function getCustomerStockItems() {
+  return (data.customerStock && data.customerStock.length) ? data.customerStock : (data.stock || []);
+}
+
+function findCustomerStock(product, section) {
+  return getCustomerStockItems().find(item =>
+    normalize(item.product) === normalize(product) &&
+    normalize(item.section || "ALL") === normalize(section || "ALL")
+  );
+}
+
+function findDatabaseStock(product, section) {
+  return (data.databaseStock || []).find(item =>
+    normalize(item.product) === normalize(product) &&
+    normalize(item.section || "ALL") === normalize(section || "ALL")
+  );
 }
 
 function findStock(product, section) {

@@ -41,6 +41,15 @@ window.NUMO_ADMIN_TEXT = {
   save: "Save",
   setupNeeded: "SETUP NEEDED",
   stockOffTextDefault: "Habis Stok",
+  liveStockLabel: "Live Database Stock",
+  customerViewLabel: "Paparan Customer",
+  manualControlLabel: "Manual Control",
+  slotAvailableLabel: "slot available",
+  readyCustomerLabel: "READY",
+  habisCustomerLabel: "HABIS STOK",
+  closedManualLabel: "DITUTUP MANUAL",
+  databaseNotFoundLabel: "Data live tidak dijumpai",
+  databaseSourceLabel: "Sumber live",
 
   // Promo labels
   promoSearchPlaceholder: "Cari produk atau plan",
